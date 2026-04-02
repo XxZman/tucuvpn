@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 import '../constants.dart';
+import '../services/toast_service.dart';
 import 'settings_provider.dart';
 import 'vpn_provider.dart';
 
@@ -59,11 +59,7 @@ class TimerNotifier extends Notifier<int> {
   }
 
   void _expire() {
-    Fluttertoast.showToast(
-      msg: '🔴 VPN Desconectada',
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.BOTTOM,
-    );
+    ToastService.show('🔴 VPN Desconectada');
     ref.read(vpnProvider.notifier).disconnect();
     Future.delayed(const Duration(milliseconds: 500), () => exit(0));
   }

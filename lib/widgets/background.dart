@@ -25,11 +25,11 @@ class CyberpunkBackground extends StatelessWidget {
         // 5. Watermark — always on top, always visible
         Positioned(
           bottom: 14,
-          right: 18,
+          left: 18,
           child: Text(
             'app por BrAM',
             style: GoogleFonts.shareTechMono(
-              fontSize: 13,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: kWatermark,
             ),

@@ -3,6 +3,9 @@ package com.tucuvpn.tucuvpn
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import id.laskarmedia.openvpn_flutter.OpenVPNFlutterPlugin
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -26,15 +29,23 @@ class MainActivity : FlutterActivity() {
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
-                if (call.method == "launchApp") {
-                    val packageName = call.argument<String>("packageName")
-                    if (packageName == null) {
-                        result.error("INVALID_ARG", "packageName is required", null)
-                        return@setMethodCallHandler
+                when (call.method) {
+                    "launchApp" -> {
+                        val packageName = call.argument<String>("packageName")
+                        if (packageName == null) {
+                            result.error("INVALID_ARG", "packageName is required", null)
+                            return@setMethodCallHandler
+                        }
+                        result.success(launchApp(packageName))
                     }
-                    result.success(launchApp(packageName))
-                } else {
-                    result.notImplemented()
+                    "showToast" -> {
+                        val message = call.argument<String>("message") ?: ""
+                        Handler(Looper.getMainLooper()).post {
+                            Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+                        }
+                        result.success(null)
+                    }
+                    else -> result.notImplemented()
                 }
             }
     }

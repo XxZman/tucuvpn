@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:openvpn_flutter/openvpn_flutter.dart';
 
 import '../constants.dart';
 import '../models/vpn_server.dart';
+import '../services/toast_service.dart';
 import 'log_provider.dart';
 import 'servers_provider.dart';
 import 'settings_provider.dart';
@@ -49,7 +50,7 @@ class VpnState {
       );
 }
 
-class VpnNotifier extends Notifier<VpnState> {
+class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
   late final OpenVPN _vpn;
   Timer? _failoverTimer;
   int _attemptIndex = 0; // which country (index into kServers)
@@ -68,11 +69,23 @@ class VpnNotifier extends Notifier<VpnState> {
       localizedDescription: 'TucuVPN',
       lastStage: (_) {},
     );
+    // Clean up any leftover VPN session from a previous run.
+    _vpn.disconnect();
+
+    WidgetsBinding.instance.addObserver(this);
     ref.onDispose(() {
+      WidgetsBinding.instance.removeObserver(this);
       _failoverTimer?.cancel();
       _vpn.disconnect();
     });
     return const VpnState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
+    if (lifecycleState == AppLifecycleState.detached) {
+      disconnect();
+    }
   }
 
   // ─── Public API ────────────────────────────────────────────────────────────
@@ -89,6 +102,9 @@ class VpnNotifier extends Notifier<VpnState> {
   Future<void> disconnect() async {
     _failoverTimer?.cancel();
     _isConnecting = false;
+    _attemptIndex = 0;
+    _configIndex = 0;
+    _startIndex = 0;
     _vpn.disconnect();
     ref.read(serversProvider.notifier).setAllIdle();
     state = state.copyWith(
@@ -240,18 +256,10 @@ class VpnNotifier extends Notifier<VpnState> {
       ref.read(logProvider.notifier)
           .add('✓ Conectado: ${kServers[_attemptIndex].name}');
       await _launchTargetApp();
-      Fluttertoast.showToast(
-        msg: '✅ VPN Conectada',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-      );
+      await ToastService.show('✅ VPN Conectada');
       final timerSeconds = await ref.read(settingsProvider.future);
       await Future.delayed(const Duration(seconds: 4));
-      Fluttertoast.showToast(
-        msg: '⏱️ Te quedan $timerSeconds segundos',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-      );
+      await ToastService.show('⏱️ Timer iniciado — $timerSeconds segundos');
     } else if (stage == VPNStage.error && _isConnecting) {
       _failoverTimer?.cancel();
       _tryNextConfig();
