@@ -82,7 +82,7 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
     });
 
     WidgetsBinding.instance.addObserver(this);
-    ref.onDispose(() {
+    ref.onDispose(() async {
       WidgetsBinding.instance.removeObserver(this);
       _failoverTimer?.cancel();
       _stageSub?.cancel();
