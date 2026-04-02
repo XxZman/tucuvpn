@@ -161,9 +161,17 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
       debugPrint('=== TUCUVPN: Config loaded, length: ${config.length}');
       debugPrint('=== TUCUVPN: Calling _vpn.connect()');
 
+      // Append compatibility flags for legacy SoftEther/VPN Gate servers.
+      final patchedConfig = config
+          + '\ntls-client'
+          + '\ntls-version-min 1.0'
+          + '\nallow-compression yes'
+          + '\ndata-ciphers AES-128-CBC'
+          + '\ndata-ciphers-fallback AES-128-CBC\n';
+
       ref.read(logProvider.notifier).add('› Autenticando...');
       _vpn.connect(
-        config,
+        patchedConfig,
         server.name,
         certIsRequired: false,
         username: 'vpn',
@@ -267,8 +275,16 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
       await Future.delayed(const Duration(seconds: 4));
       await ToastService.show('⏱️ Timer iniciado — $timerSeconds segundos');
     } else if (stage == VPNStage.error && _isConnecting) {
+      debugPrint('=== TUCUVPN: VPN error stage — raw: $rawStage');
+      ref.read(logProvider.notifier)
+          .add('✗ Error: ${rawStage ?? "error"} — cambiando servidor...');
       _failoverTimer?.cancel();
       _tryNextConfig();
+    } else if (stage == VPNStage.disconnected && _isConnecting) {
+      // Disconnected unexpectedly while still trying to connect.
+      debugPrint('=== TUCUVPN: Unexpected disconnect while connecting — raw: $rawStage');
+      ref.read(logProvider.notifier)
+          .add('✗ Desconectado inesperado (${rawStage ?? "?"})');
     } else if (stage == VPNStage.disconnected && !_isConnecting) {
       ref.read(serversProvider.notifier).setAllIdle();
       state = state.copyWith(
@@ -276,6 +292,10 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
         statusMessage: 'Desconectado',
         clearActive: true,
       );
+    } else if (stage != null && stage != VPNStage.connected) {
+      // Log all intermediate stages (authenticating, wait_connection, etc.)
+      debugPrint('=== TUCUVPN: Stage — $stage / raw: $rawStage');
+      ref.read(logProvider.notifier).add('  $rawStage');
     }
   }
 
