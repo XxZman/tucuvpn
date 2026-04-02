@@ -9,12 +9,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-android_intent_plus: ^5.0.0
+  android_intent_plus: ^5.0.0
   shared_preferences: ^2.3.2
   flutter_riverpod: ^2.5.1
   google_fonts: ^6.2.1
   package_info_plus: ^8.0.0
-http: ^1.2.1
+  http: ^1.2.1
 
 dev_dependencies:
   flutter_test:
