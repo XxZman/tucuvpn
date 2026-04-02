@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../constants.dart';
 import '../providers/timer_provider.dart'; // ensure timer starts
+import '../providers/vpn_provider.dart';
 import '../widgets/background.dart';
 import '../widgets/server_list_panel.dart';
 import '../widgets/right_panel.dart';
@@ -18,6 +19,24 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Ensure timer provider is initialised (starts the countdown).
     ref.watch(timerProvider);
+
+    // Show a SnackBar when the target app could not be launched.
+    ref.listen<VpnState>(vpnProvider, (_, next) {
+      if (next.launchError != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              next.launchError!,
+              style: const TextStyle(color: kText),
+            ),
+            backgroundColor: kPink,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        // Clear so the snackbar doesn't re-appear on the next rebuild.
+        ref.read(vpnProvider.notifier).clearLaunchError();
+      }
+    });
 
     return Scaffold(
       backgroundColor: kBg,

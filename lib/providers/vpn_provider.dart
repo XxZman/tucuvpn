@@ -18,11 +18,14 @@ class VpnState {
   final VpnConnectionState connectionState;
   final String statusMessage;
   final int? activeServerIndex;
+  // Non-null while a "app not installed" snackbar is pending; cleared by the UI.
+  final String? launchError;
 
   const VpnState({
     this.connectionState = VpnConnectionState.idle,
     this.statusMessage = 'Desconectado',
     this.activeServerIndex,
+    this.launchError,
   });
 
   bool get isConnected => connectionState == VpnConnectionState.connected;
@@ -33,12 +36,16 @@ class VpnState {
     String? statusMessage,
     int? activeServerIndex,
     bool clearActive = false,
+    String? launchError,
+    bool clearLaunchError = false,
   }) =>
       VpnState(
         connectionState: connectionState ?? this.connectionState,
         statusMessage: statusMessage ?? this.statusMessage,
         activeServerIndex:
             clearActive ? null : (activeServerIndex ?? this.activeServerIndex),
+        launchError:
+            clearLaunchError ? null : (launchError ?? this.launchError),
       );
 }
 
@@ -226,18 +233,24 @@ class VpnNotifier extends Notifier<VpnState> {
 
   void _onStatusChange(VpnStatus? status) {}
 
+  /// Called by the UI after it has displayed the snackbar.
+  void clearLaunchError() {
+    state = state.copyWith(clearLaunchError: true);
+  }
+
   // ─── Launch external app ───────────────────────────────────────────────────
 
   Future<void> _launchTargetApp() async {
     try {
-      const intent = AndroidIntent(
+      final intent = AndroidIntent(
         action: 'android.intent.action.MAIN',
         package: kTargetAppPackage,
         flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
       );
       await intent.launch();
     } catch (_) {
-      // App not installed or not launchable — silently ignore.
+      // App not installed or intent rejected — surface a snackbar via state.
+      state = state.copyWith(launchError: 'App destino no instalada');
     }
   }
 }
