@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:openvpn_flutter/openvpn_flutter.dart';
@@ -241,6 +242,21 @@ class VpnNotifier extends Notifier<VpnState> {
   // ─── Launch external app ───────────────────────────────────────────────────
 
   Future<void> _launchTargetApp() async {
+    // Strategy 1: explicit component name (most reliable when known).
+    try {
+      final intent = AndroidIntent(
+        action: 'android.intent.action.MAIN',
+        package: kTargetAppPackage,
+        componentName: '$kTargetAppPackage/.activities.MainActivity',
+        flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+      );
+      await intent.launch();
+      return; // success — done
+    } catch (e1) {
+      debugPrint('Launch strategy 1 failed: $e1');
+    }
+
+    // Strategy 2: package only, let Android resolve the launcher activity.
     try {
       final intent = AndroidIntent(
         action: 'android.intent.action.MAIN',
@@ -248,9 +264,13 @@ class VpnNotifier extends Notifier<VpnState> {
         flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
       );
       await intent.launch();
-    } catch (_) {
-      // App not installed or intent rejected — surface a snackbar via state.
-      state = state.copyWith(launchError: 'App destino no instalada');
+      return; // success — done
+    } catch (e2) {
+      debugPrint('Launch strategy 2 failed: $e2');
+      // Surface the real error so it's visible while debugging.
+      state = state.copyWith(
+        launchError: 'Error al abrir app: $e2',
+      );
     }
   }
 }
