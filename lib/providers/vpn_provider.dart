@@ -162,7 +162,13 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
       debugPrint('=== TUCUVPN: Calling _vpn.connect()');
 
       ref.read(logProvider.notifier).add('› Autenticando...');
-      _vpn.connect(config, server.name, certIsRequired: false);
+      _vpn.connect(
+        config,
+        server.name,
+        certIsRequired: false,
+        username: 'vpn',
+        password: 'vpn',
+      );
 
       debugPrint('=== TUCUVPN: connect() called successfully');
 
