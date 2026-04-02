@@ -1,0 +1,66 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write   # needed to create GitHub Releases
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Java ────────────────────────────────────────────────────────────────
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+
+      # ── Flutter ─────────────────────────────────────────────────────────────
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # ── Dependencies ────────────────────────────────────────────────────────
+      - name: Install dependencies
+        run: flutter pub get
+
+      # ── Version ─────────────────────────────────────────────────────────────
+      - name: Extract version from pubspec.yaml
+        id: ver
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//' | tr -d '[:space:]')
+          SEMVER=$(echo "$VERSION" | cut -d'+' -f1)
+          echo "semver=$SEMVER"      >> "$GITHUB_OUTPUT"
+          echo "tag=v$SEMVER"       >> "$GITHUB_OUTPUT"
+          echo "full=$VERSION"      >> "$GITHUB_OUTPUT"
+
+      # ── Build ───────────────────────────────────────────────────────────────
+      - name: Build release APK
+        run: flutter build apk --release
+
+      # ── Rename APK with version ─────────────────────────────────────────────
+      - name: Rename APK
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/tucuvpn-${{ steps.ver.outputs.semver }}.apk
+
+      # ── GitHub Release ───────────────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: "TucuVPN ${{ steps.ver.outputs.tag }}"
+          generate_release_notes: true
+          files: build/app/outputs/flutter-apk/tucuvpn-${{ steps.ver.outputs.semver }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

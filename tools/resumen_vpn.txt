@@ -1,0 +1,76 @@
+====================================================================================================
+  RESUMEN VPN GATE — servidores filtrados y ordenados por velocidad
+====================================================================================================
+
+Brasil   🇧🇷 — 0 servidor(es) encontrado(s)
+----------------------------------------------------------------------------------------------------
+  (ninguno disponible en este momento)
+
+Japon    🇯🇵 — 53 servidor(es) encontrado(s)
+----------------------------------------------------------------------------------------------------
+  #1   | 219.100.37.18    | ⚡  9510.88 Mbps | 📶 Excelente  (23ms) | 👥      86 usuarios | ⏱️  52544.0 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #2   | 131.147.32.23    | ⚡  7356.97 Mbps | 📶 Excelente  (2ms) | 👥       3 usuarios | ⏱️     0.0 dias | 🔒 OpenVPN TCP     | ✅ Sin datos
+  #3   | 126.163.152.111  | ⚡  7086.04 Mbps | 📶 Excelente  (4ms) | 👥       4 usuarios | ⏱️   392.6 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #4   | 152.165.98.89    | ⚡  6993.50 Mbps | 📶 Excelente  (1ms) | 👥      18 usuarios | ⏱️  3673.6 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #5   | 39.111.179.36    | ⚡  5502.49 Mbps | 📶 Excelente  (3ms) | 👥      12 usuarios | ⏱️     0.0 dias | 🔒 OpenVPN TCP     | ✅ Sin datos
+  #6   | 126.15.85.86     | ⚡  5304.03 Mbps | 📶 Excelente  (3ms) | 👥      20 usuarios | ⏱️  1506.0 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #7   | 219.100.37.127   | ⚡  5189.30 Mbps | 📶 Excelente  (21ms) | 👥      44 usuarios | ⏱️  52543.3 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #8   | 60.73.214.202    | ⚡  4910.39 Mbps | 📶 Excelente  (5ms) | 👥      53 usuarios | ⏱️  5469.7 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #9   | 60.108.146.236   | ⚡  4817.47 Mbps | 📶 Excelente  (3ms) | 👥      19 usuarios | ⏱️   392.6 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #10  | 119.24.215.216   | ⚡  4681.55 Mbps | 📶 Bueno      (60ms) | 👥      11 usuarios | ⏱️  24389.3 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #11  | 219.100.37.164   | ⚡  4582.54 Mbps | 📶 Excelente  (15ms) | 👥      57 usuarios | ⏱️  52544.4 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #12  | 219.100.37.12    | ⚡  4532.43 Mbps | 📶 Excelente  (11ms) | 👥     105 usuarios | ⏱️  52543.3 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #13  | 118.155.140.137  | ⚡  4365.77 Mbps | 📶 Excelente  (6ms) | 👥      12 usuarios | ⏱️   543.7 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #14  | 219.100.37.167   | ⚡  4297.32 Mbps | 📶 Excelente  (9ms) | 👥      34 usuarios | ⏱️  52543.7 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #15  | 219.100.37.176   | ⚡  4065.21 Mbps | 📶 Excelente  (25ms) | 👥     121 usuarios | ⏱️  52543.2 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #16  | 219.100.37.175   | ⚡  4059.78 Mbps | 📶 Excelente  (8ms) | 👥      50 usuarios | ⏱️  52543.8 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #17  | 219.100.37.205   | ⚡  3889.09 Mbps | 📶 Excelente  (15ms) | 👥      48 usuarios | ⏱️  52543.8 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #18  | 111.97.232.224   | ⚡  3852.24 Mbps | 📶 Excelente  (20ms) | 👥      15 usuarios | ⏱️  8633.7 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #19  | 219.100.37.88    | ⚡  3829.33 Mbps | 📶 Excelente  (9ms) | 👥      38 usuarios | ⏱️  52544.1 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #20  | 219.100.37.7     | ⚡  3822.60 Mbps | 📶 Excelente  (11ms) | 👥     135 usuarios | ⏱️  52543.9 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #21  | 219.100.37.82    | ⚡  3650.95 Mbps | 📶 Excelente  (13ms) | 👥     142 usuarios | ⏱️  52544.5 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #22  | 119.240.180.142  | ⚡  3646.99 Mbps | 📶 Excelente  (6ms) | 👥      19 usuarios | ⏱️     0.0 dias | 🔒 OpenVPN TCP     | ✅ Sin datos
+  #23  | 219.100.37.194   | ⚡  3426.30 Mbps | 📶 Excelente  (18ms) | 👥      33 usuarios | ⏱️  52544.4 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #24  | 219.100.37.220   | ⚡  3331.51 Mbps | 📶 Excelente  (12ms) | 👥      61 usuarios | ⏱️  52543.7 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #25  | 219.100.37.11    | ⚡  3160.11 Mbps | 📶 Excelente  (12ms) | 👥      71 usuarios | ⏱️  52543.6 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #26  | 60.70.100.214    | ⚡  3087.88 Mbps | 📶 Excelente  (5ms) | 👥       0 usuarios | ⏱️  1506.0 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #27  | 180.47.100.216   | ⚡  2961.34 Mbps | 📶 Excelente  (17ms) | 👥       8 usuarios | ⏱️     0.0 dias | 🔒 OpenVPN TCP     | ✅ Sin datos
+  #28  | 219.104.84.18    | ⚡  2597.37 Mbps | 📶 Excelente  (2ms) | 👥      80 usuarios | ⏱️  24535.5 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #29  | 134.180.158.111  | ⚡  2367.81 Mbps | 📶 Excelente  (4ms) | 👥       4 usuarios | ⏱️   392.6 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #30  | 220.254.220.117  | ⚡  2250.72 Mbps | 📶 Excelente  (14ms) | 👥      37 usuarios | ⏱️  25710.1 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #31  | 119.173.41.175   | ⚡  1968.27 Mbps | 📶 Excelente  (24ms) | 👥       3 usuarios | ⏱️  6212.1 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #32  | 153.198.63.27    | ⚡  1620.38 Mbps | 📶 Excelente  (13ms) | 👥       5 usuarios | ⏱️   392.6 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #33  | 59.147.105.53    | ⚡  1571.45 Mbps | 📶 Excelente  (3ms) | 👥       3 usuarios | ⏱️   543.7 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #34  | 180.36.72.160    | ⚡  1568.33 Mbps | 📶 Excelente  (16ms) | 👥       1 usuarios | ⏱️     0.0 dias | 🔒 OpenVPN TCP     | ✅ Sin datos
+  #35  | 42.148.153.40    | ⚡  1502.80 Mbps | 📶 Excelente  (17ms) | 👥       5 usuarios | ⏱️  12642.5 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #36  | 60.74.233.97     | ⚡  1484.39 Mbps | 📶 Excelente  (17ms) | 👥      10 usuarios | ⏱️  1506.0 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #37  | 126.75.189.2     | ⚡  1374.73 Mbps | 📶 Excelente  (4ms) | 👥      46 usuarios | ⏱️  37771.3 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #38  | 150.31.45.162    | ⚡  1100.42 Mbps | 📶 Excelente  (4ms) | 👥      19 usuarios | ⏱️  6212.1 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #39  | 180.200.18.11    | ⚡   873.21 Mbps | 📶 Bueno      (42ms) | 👥      17 usuarios | ⏱️     0.0 dias | 🔒 OpenVPN TCP     | ✅ Sin datos
+  #40  | 61.24.93.129     | ⚡   775.94 Mbps | 📶 Excelente  (19ms) | 👥       9 usuarios | ⏱️     0.0 dias | 🔒 OpenVPN TCP     | ✅ Sin datos
+  #41  | 183.176.251.177  | ⚡   772.03 Mbps | 📶 Excelente  (5ms) | 👥      13 usuarios | ⏱️     0.0 dias | 🔒 OpenVPN TCP     | ✅ Sin datos
+  #42  | 61.23.154.45     | ⚡   771.49 Mbps | 📶 Excelente  (16ms) | 👥       1 usuarios | ⏱️     0.0 dias | 🔒 OpenVPN TCP     | ✅ Sin datos
+  #43  | 121.118.241.122  | ⚡   768.54 Mbps | 📶 Excelente  (14ms) | 👥       3 usuarios | ⏱️   543.7 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #44  | 114.145.165.58   | ⚡   731.90 Mbps | 📶 Excelente  (21ms) | 👥      19 usuarios | ⏱️  6660.9 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #45  | 60.91.40.164     | ⚡   723.38 Mbps | 📶 Excelente  (10ms) | 👥      12 usuarios | ⏱️  3673.6 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #46  | 153.206.108.217  | ⚡   665.70 Mbps | 📶 Excelente  (6ms) | 👥       0 usuarios | ⏱️   543.7 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #47  | 119.83.216.181   | ⚡   609.96 Mbps | 📶 Excelente  (13ms) | 👥      18 usuarios | ⏱️   543.7 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #48  | 119.170.84.114   | ⚡   586.32 Mbps | 📶 Excelente  (25ms) | 👥      11 usuarios | ⏱️  2619.0 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #49  | 111.238.189.171  | ⚡   505.46 Mbps | 📶 Excelente  (5ms) | 👥      68 usuarios | ⏱️  89752.5 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #50  | 116.64.168.73    | ⚡   421.19 Mbps | 📶 Malo       (215ms) | 👥       3 usuarios | ⏱️   392.6 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #51  | 118.105.239.104  | ⚡   413.75 Mbps | 📶 Excelente  (11ms) | 👥      17 usuarios | ⏱️  11432.3 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #52  | 1.66.33.164      | ⚡   215.71 Mbps | 📶 Excelente  (29ms) | 👥      44 usuarios | ⏱️     0.0 dias | 🔒 OpenVPN TCP     | ✅ Sin datos
+  #53  | 103.152.178.62   | ⚡   141.97 Mbps | 📶 Excelente  (10ms) | 👥     149 usuarios | ⏱️  18277.0 dias | 🔒 OpenVPN TCP     | ✅ Activo
+
+Canada   🇨🇦 — 2 servidor(es) encontrado(s)
+----------------------------------------------------------------------------------------------------
+  #1   | 70.79.229.82     | ⚡  5265.16 Mbps | 📶 Excelente  (17ms) | 👥      61 usuarios | ⏱️  7436.6 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #2   | 70.79.240.77     | ⚡  1356.78 Mbps | 📶 Excelente  (15ms) | 👥      75 usuarios | ⏱️  36549.8 dias | 🔒 OpenVPN TCP     | ✅ Activo
+
+EE.UU.   🇺🇸 — 3 servidor(es) encontrado(s)
+----------------------------------------------------------------------------------------------------
+  #1   | 135.180.190.55   | ⚡  2856.59 Mbps | 📶 Excelente  (5ms) | 👥      54 usuarios | ⏱️     0.0 dias | 🔒 OpenVPN TCP     | ✅ Sin datos
+  #2   | 66.232.223.241   | ⚡  1807.58 Mbps | 📶 Excelente  (19ms) | 👥      49 usuarios | ⏱️   543.7 dias | 🔒 OpenVPN TCP     | ✅ Activo
+  #3   | 24.130.208.249   | ⚡     8.39 Mbps | 📶 Excelente  (21ms) | 👥       7 usuarios | ⏱️  3673.6 dias | 🔒 OpenVPN TCP     | ✅ Activo
+
+====================================================================================================
