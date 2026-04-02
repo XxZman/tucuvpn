@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,53 +83,13 @@ class VpnNotifier extends Notifier<VpnState> {
   Future<void> disconnect() async {
     _failoverTimer?.cancel();
     _isConnecting = false;
-    _vpn.disconnect(); // no-op when in emulator mode — safe to call
+    _vpn.disconnect();
     ref.read(serversProvider.notifier).setAllIdle();
     state = state.copyWith(
       connectionState: VpnConnectionState.idle,
       statusMessage: 'Desconectado',
       clearActive: true,
     );
-  }
-
-  // ─── Emulator detection ────────────────────────────────────────────────────
-
-  /// Returns true when running on an Android emulator.
-  /// Checks Build.HARDWARE == "ranchu" (QEMU/AVD) or a generic fingerprint.
-  Future<bool> _isEmulator() async {
-    if (!Platform.isAndroid) return false;
-    try {
-      final info = await DeviceInfoPlugin().androidInfo;
-      return !info.isPhysicalDevice ||
-          info.hardware == 'ranchu' ||
-          info.fingerprint.contains('generic') ||
-          info.fingerprint.contains('emulator');
-    } catch (_) {
-      return false;
-    }
-  }
-
-  // ─── Emulator simulation ───────────────────────────────────────────────────
-
-  Future<void> _simulateConnection(int index) async {
-    // Fake the 2-second "handshake" so the UI looks realistic.
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!_isConnecting) return; // user disconnected while waiting
-
-    _failoverTimer?.cancel();
-    _isConnecting = false;
-
-    ref.read(serversProvider.notifier).setAllIdle();
-    ref.read(serversProvider.notifier).setStatus(index, ServerStatus.active);
-
-    state = state.copyWith(
-      connectionState: VpnConnectionState.connected,
-      statusMessage: 'Conectado (modo prueba) · ${kServers[index].name}',
-      activeServerIndex: index,
-    );
-
-    await _launchTargetApp();
   }
 
   // ─── Failover loop ─────────────────────────────────────────────────────────
@@ -148,12 +106,6 @@ class VpnNotifier extends Notifier<VpnState> {
       statusMessage: 'Conectando a ${servers[index].name}…',
       clearActive: true,
     );
-
-    // On emulator: skip real OpenVPN and simulate a successful connection.
-    if (await _isEmulator()) {
-      await _simulateConnection(index);
-      return;
-    }
 
     try {
       final config = await rootBundle.loadString(servers[index].configPath);
@@ -200,7 +152,7 @@ class VpnNotifier extends Notifier<VpnState> {
     );
   }
 
-  // ─── OpenVPN callbacks (real device only) ─────────────────────────────────
+  // ─── OpenVPN callbacks ────────────────────────────────────────────────────
 
   Future<void> _onStageChange(VPNStage? stage, String? rawStage) async {
     if (stage == VPNStage.connected) {
