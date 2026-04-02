@@ -4,73 +4,83 @@
 ======================================================================
 
 ✅ Servidores funcionales:
-  🇯🇵  Japón: 39 funcionando
-  🇨🇦  Canadá: 2 funcionando
-  🇺🇸  EEUU: 3 funcionando
+  🇯🇵  Japón: 51 funcionando
+  🇨🇦  Canadá: 1 funcionando
+  🇺🇸  EEUU: 2 funcionando
   🇧🇷  Brasil: 0 funcionando
 
   Archivos guardados en: C:\Users\monte\OneDrive\Desktop\vpn xuper\tools\ovpn_funcionales
 
   Los mejores por pais (mayor velocidad + ping bajo):
-  🥇 Japón: JP_6.ovpn    — 9,511 Mbps, 23ms ping
-  🥇 Canadá: CA_1.ovpn    — 5,265 Mbps, 17ms ping
-  🥇 EEUU: US_3.ovpn    — 2,857 Mbps, 5ms ping
+  🥇 Japón: JP_5.ovpn    — 9,878 Mbps, 16ms ping
+  🥇 Canadá: CA_1.ovpn    — RTT 237ms, 237ms ping
+  🥇 EEUU: US_1.ovpn    — RTT 172ms, 172ms ping
   🥇 Brasil: (ninguno disponible)
 
 ======================================================================
 
-🇯🇵  Japón — 39 funcionales
+🇯🇵  Japón — 51 funcionales
 ----------------------------------------------------------------------
-  #1   JP_6.ovpn    | 219.100.37.18    :443   | ⚡  9,510.88 Mbps | 📶   23ms | RTT 330ms
-  #2   JP_37.ovpn   | 131.147.32.23    :1489  | ⚡  7,356.97 Mbps | 📶    2ms | RTT 332ms
-  #3   JP_30.ovpn   | 126.163.152.111  :1388  | ⚡  7,086.04 Mbps | 📶    4ms | RTT 322ms
-  #4   JP_26.ovpn   | 126.15.85.86     :995   | ⚡  5,304.03 Mbps | 📶    3ms | RTT 308ms
-  #5   JP_2.ovpn    | 219.100.37.127   :443   | ⚡  5,189.30 Mbps | 📶   21ms | RTT 314ms
-  #6   JP_20.ovpn   | 60.73.214.202    :1719  | ⚡  4,910.39 Mbps | 📶    5ms | RTT 317ms
-  #7   JP_28.ovpn   | 60.108.146.236   :1534  | ⚡  4,817.47 Mbps | 📶    3ms | RTT 316ms
-  #8   JP_24.ovpn   | 119.24.215.216   :1789  | ⚡  4,681.55 Mbps | 📶   60ms | RTT 339ms
-  #9   JP_3.ovpn    | 219.100.37.164   :443   | ⚡  4,582.54 Mbps | 📶   15ms | RTT 322ms
-  #10  JP_21.ovpn   | 219.100.37.12    :443   | ⚡  4,532.43 Mbps | 📶   11ms | RTT 319ms
-  #11  JP_29.ovpn   | 118.155.140.137  :1210  | ⚡  4,365.77 Mbps | 📶    6ms | RTT 357ms
-  #12  JP_4.ovpn    | 219.100.37.167   :443   | ⚡  4,297.32 Mbps | 📶    9ms | RTT 309ms
-  #13  JP_23.ovpn   | 219.100.37.176   :443   | ⚡  4,065.21 Mbps | 📶   25ms | RTT 346ms
-  #14  JP_11.ovpn   | 219.100.37.175   :443   | ⚡  4,059.78 Mbps | 📶    8ms | RTT 321ms
-  #15  JP_10.ovpn   | 219.100.37.205   :443   | ⚡  3,889.09 Mbps | 📶   15ms | RTT 314ms
-  #16  JP_13.ovpn   | 111.97.232.224   :1992  | ⚡  3,852.24 Mbps | 📶   20ms | RTT 362ms
-  #17  JP_5.ovpn    | 219.100.37.88    :443   | ⚡  3,829.33 Mbps | 📶    9ms | RTT 320ms
-  #18  JP_19.ovpn   | 219.100.37.7     :443   | ⚡  3,822.60 Mbps | 📶   11ms | RTT 325ms
-  #19  JP_7.ovpn    | 219.100.37.82    :443   | ⚡  3,650.95 Mbps | 📶   13ms | RTT 325ms
-  #20  JP_35.ovpn   | 119.240.180.142  :1270  | ⚡  3,646.99 Mbps | 📶    6ms | RTT 304ms
-  #21  JP_9.ovpn    | 219.100.37.194   :443   | ⚡  3,426.30 Mbps | 📶   18ms | RTT 334ms
-  #22  JP_1.ovpn    | 219.100.37.220   :443   | ⚡  3,331.51 Mbps | 📶   12ms | RTT 334ms
-  #23  JP_8.ovpn    | 219.100.37.11    :443   | ⚡  3,160.11 Mbps | 📶   12ms | RTT 318ms
-  #24  JP_36.ovpn   | 180.47.100.216   :1611  | ⚡  2,961.34 Mbps | 📶   17ms | RTT 350ms
-  #25  JP_14.ovpn   | 220.254.220.117  :1908  | ⚡  2,250.72 Mbps | 📶   14ms | RTT 425ms
-  #26  JP_32.ovpn   | 153.198.63.27    :1511  | ⚡  1,620.38 Mbps | 📶   13ms | RTT 333ms
-  #27  JP_34.ovpn   | 180.36.72.160    :1580  | ⚡  1,568.33 Mbps | 📶   16ms | RTT 345ms
-  #28  JP_16.ovpn   | 42.148.153.40    :1925  | ⚡  1,502.80 Mbps | 📶   17ms | RTT 314ms
-  #29  JP_27.ovpn   | 60.74.233.97     :1240  | ⚡  1,484.39 Mbps | 📶   17ms | RTT 325ms
-  #30  JP_17.ovpn   | 126.75.189.2     :1321  | ⚡  1,374.73 Mbps | 📶    4ms | RTT 327ms
-  #31  JP_18.ovpn   | 150.31.45.162    :1508  | ⚡  1,100.42 Mbps | 📶    4ms | RTT 316ms
-  #32  JP_39.ovpn   | 180.200.18.11    :1717  | ⚡    873.21 Mbps | 📶   42ms | RTT 333ms
-  #33  JP_33.ovpn   | 183.176.251.177  :1448  | ⚡    772.03 Mbps | 📶    5ms | RTT 425ms
-  #34  JP_31.ovpn   | 119.83.216.181   :1720  | ⚡    609.96 Mbps | 📶   13ms | RTT 398ms
-  #35  JP_25.ovpn   | 119.170.84.114   :1410  | ⚡    586.32 Mbps | 📶   25ms | RTT 332ms
-  #36  JP_12.ovpn   | 111.238.189.171  :1214  | ⚡    505.46 Mbps | 📶    5ms | RTT 324ms
-  #37  JP_15.ovpn   | 118.105.239.104  :1465  | ⚡    413.75 Mbps | 📶   11ms | RTT 344ms
-  #38  JP_38.ovpn   | 1.66.33.164      :443   | ⚡    215.71 Mbps | 📶   29ms | RTT 351ms
-  #39  JP_22.ovpn   | 103.152.178.62   :1194  | ⚡    141.97 Mbps | 📶   10ms | RTT 332ms
+  #1   JP_5.ovpn    | 219.100.37.18    :443   | ⚡  9,878.15 Mbps | 📶   16ms | RTT 333ms
+  #2   JP_26.ovpn   | 106.155.167.26   :1878  | ⚡  7,625.74 Mbps | 📶    9ms | RTT 338ms
+  #3   JP_43.ovpn   | 110.67.79.28     :1793  | ⚡  7,525.56 Mbps | 📶   18ms | RTT 349ms
+  #4   JP_16.ovpn   | 126.206.101.214  :1342  | ⚡  7,302.06 Mbps | 📶    5ms | RTT 332ms
+  #5   JP_44.ovpn   | 124.18.151.84    :1441  | ⚡  7,167.20 Mbps | 📶   11ms | RTT 332ms
+  #6   JP_51.ovpn   | 125.52.63.205    :1845  | ⚡  7,151.26 Mbps | 📶   12ms | RTT 334ms
+  #7   JP_24.ovpn   | 159.28.178.62    :1400  | ⚡  7,104.31 Mbps | 📶    3ms | RTT 337ms
+  #8   JP_14.ovpn   | 118.105.178.39   :1914  | ⚡  6,858.51 Mbps | 📶    7ms | RTT 332ms
+  #9   JP_32.ovpn   | 121.103.202.8    :1289  | ⚡  6,647.10 Mbps | 📶    2ms | RTT 338ms
+  #10  JP_21.ovpn   | 126.206.11.243   :1568  | ⚡  6,567.69 Mbps | 📶    5ms | RTT 330ms
+  #11  JP_35.ovpn   | 126.12.184.143   :1826  | ⚡  5,814.97 Mbps | 📶    4ms | RTT 317ms
+  #12  JP_31.ovpn   | 221.119.75.211   :1359  | ⚡  5,652.87 Mbps | 📶    5ms | RTT 323ms
+  #13  JP_41.ovpn   | 182.165.181.74   :1403  | ⚡  5,494.35 Mbps | 📶    1ms | RTT 327ms
+  #14  JP_29.ovpn   | 119.231.38.164   :1453  | ⚡  5,373.90 Mbps | 📶    1ms | RTT 406ms
+  #15  JP_23.ovpn   | 118.237.36.183   :1372  | ⚡  4,780.16 Mbps | 📶    6ms | RTT 349ms
+  #16  JP_17.ovpn   | 219.100.37.12    :443   | ⚡  4,725.37 Mbps | 📶   24ms | RTT 319ms
+  #17  JP_27.ovpn   | 60.65.241.137    :1325  | ⚡  4,678.46 Mbps | 📶    5ms | RTT 329ms
+  #18  JP_6.ovpn    | 219.100.37.88    :443   | ⚡  4,352.14 Mbps | 📶   24ms | RTT 324ms
+  #19  JP_2.ovpn    | 219.100.37.127   :443   | ⚡  4,177.29 Mbps | 📶   14ms | RTT 332ms
+  #20  JP_34.ovpn   | 60.126.113.80    :1918  | ⚡  4,006.29 Mbps | 📶    5ms | RTT 324ms
+  #21  JP_3.ovpn    | 219.100.37.164   :443   | ⚡  3,879.76 Mbps | 📶   12ms | RTT 324ms
+  #22  JP_18.ovpn   | 219.100.37.176   :443   | ⚡  3,874.76 Mbps | 📶   14ms | RTT 323ms
+  #23  JP_10.ovpn   | 219.100.37.205   :443   | ⚡  3,770.63 Mbps | 📶   15ms | RTT 324ms
+  #24  JP_4.ovpn    | 219.100.37.167   :443   | ⚡  3,726.88 Mbps | 📶   18ms | RTT 333ms
+  #25  JP_38.ovpn   | 118.8.116.118    :1357  | ⚡  3,641.55 Mbps | 📶    3ms | RTT 328ms
+  #26  JP_11.ovpn   | 219.100.37.175   :443   | ⚡  3,558.81 Mbps | 📶   13ms | RTT 334ms
+  #27  JP_46.ovpn   | 216.153.126.191  :1412  | ⚡  3,303.15 Mbps | 📶    3ms | RTT 326ms
+  #28  JP_15.ovpn   | 219.100.37.7     :443   | ⚡  3,247.77 Mbps | 📶   20ms | RTT 320ms
+  #29  JP_20.ovpn   | 118.237.133.70   :1428  | ⚡  3,103.37 Mbps | 📶    9ms | RTT 344ms
+  #30  JP_8.ovpn    | 219.100.37.11    :443   | ⚡  3,060.53 Mbps | 📶   15ms | RTT 316ms
+  #31  JP_1.ovpn    | 219.100.37.220   :443   | ⚡  2,916.26 Mbps | 📶   19ms | RTT 346ms
+  #32  JP_7.ovpn    | 219.100.37.82    :443   | ⚡  2,760.99 Mbps | 📶    9ms | RTT 324ms
+  #33  JP_9.ovpn    | 219.100.37.194   :443   | ⚡  2,758.11 Mbps | 📶   12ms | RTT 328ms
+  #34  JP_47.ovpn   | 116.64.156.139   :1850  | ⚡  1,905.17 Mbps | 📶   15ms | RTT 324ms
+  #35  JP_13.ovpn   | 122.208.249.174  :1666  | ⚡  1,740.15 Mbps | 📶    7ms | RTT 399ms
+  #36  JP_42.ovpn   | 202.94.53.22     :1839  | ⚡  1,555.76 Mbps | 📶    7ms | RTT 339ms
+  #37  JP_28.ovpn   | 153.212.77.193   :1311  | ⚡  1,424.71 Mbps | 📶   27ms | RTT 354ms
+  #38  JP_48.ovpn   | 60.96.219.14     :1889  | ⚡    775.08 Mbps | 📶   14ms | RTT 341ms
+  #39  JP_45.ovpn   | 58.93.239.160    :1825  | ⚡    769.51 Mbps | 📶   11ms | RTT 342ms
+  #40  JP_12.ovpn   | 180.92.24.7      :1551  | ⚡    767.88 Mbps | 📶   15ms | RTT 327ms
+  #41  JP_30.ovpn   | 126.51.194.248   :1704  | ⚡    767.26 Mbps | 📶    5ms | RTT 322ms
+  #42  JP_50.ovpn   | 126.218.99.15    :1316  | ⚡    761.74 Mbps | 📶    8ms | RTT 334ms
+  #43  JP_33.ovpn   | 106.157.175.170  :1701  | ⚡    709.84 Mbps | 📶   13ms | RTT 354ms
+  #44  JP_22.ovpn   | 113.148.186.91   :1276  | ⚡    541.22 Mbps | 📶    6ms | RTT 343ms
+  #45  JP_49.ovpn   | 1.66.33.164      :443   | ⚡    501.97 Mbps | 📶   29ms | RTT 334ms
+  #46  JP_37.ovpn   | 124.215.2.130    :1358  | ⚡    326.00 Mbps | 📶    8ms | RTT 321ms
+  #47  JP_25.ovpn   | 49.129.238.209   :1497  | ⚡    299.51 Mbps | 📶    9ms | RTT 328ms
+  #48  JP_36.ovpn   | 218.220.155.188  :1327  | ⚡    271.43 Mbps | 📶   21ms | RTT 1354ms
+  #49  JP_40.ovpn   | 180.196.91.215   :1712  | ⚡    259.46 Mbps | 📶    6ms | RTT 328ms
+  #50  JP_39.ovpn   | 58.183.171.126   :1317  | ⚡    211.93 Mbps | 📶   13ms | RTT 362ms
+  #51  JP_19.ovpn   | 103.152.178.62   :1194  | ⚡    171.24 Mbps | 📶   10ms | RTT 342ms
 
-🇨🇦  Canadá — 2 funcionales
+🇨🇦  Canadá — 1 funcionales
 ----------------------------------------------------------------------
-  #1   CA_1.ovpn    | 70.79.229.82     :1734  | ⚡  5,265.16 Mbps | 📶   17ms | RTT 249ms
-  #2   CA_2.ovpn    | 70.79.240.77     :995   | ⚡  1,356.78 Mbps | 📶   15ms | RTT 241ms
+  #1   CA_1.ovpn    | 70.79.240.77     :995   | ⚡           N/D | 📶  237ms | RTT 237ms
 
-🇺🇸  EEUU — 3 funcionales
+🇺🇸  EEUU — 2 funcionales
 ----------------------------------------------------------------------
-  #1   US_3.ovpn    | 135.180.190.55   :1418  | ⚡  2,856.59 Mbps | 📶    5ms | RTT 241ms
-  #2   US_1.ovpn    | 66.232.223.241   :1717  | ⚡  1,807.58 Mbps | 📶   19ms | RTT 230ms
-  #3   US_2.ovpn    | 24.130.208.249   :1717  | ⚡      8.39 Mbps | 📶   21ms | RTT 352ms
+  #1   US_1.ovpn    | 73.49.160.240    :1691  | ⚡           N/D | 📶  172ms | RTT 172ms
+  #2   US_2.ovpn    | 135.180.190.55   :1418  | ⚡           N/D | 📶  223ms | RTT 224ms
 
 🇧🇷  Brasil — 0 funcionales
 ----------------------------------------------------------------------

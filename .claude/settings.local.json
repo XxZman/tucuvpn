@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/monte/AppData/Local/Pub/Cache/hosted/pub.dev//**)",
+      "Read(//c/Users/monte/**)",
+      "Bash(grep -iE \"^\\(brazil|japan|canada|usa\\)\\\\.ovpn$\")"
+    ]
+  }
+}
