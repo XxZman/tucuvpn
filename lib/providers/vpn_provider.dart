@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:android_intent_plus/android_intent.dart';
-import 'package:android_intent_plus/flag.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -241,36 +239,26 @@ class VpnNotifier extends Notifier<VpnState> {
 
   // ─── Launch external app ───────────────────────────────────────────────────
 
-  Future<void> _launchTargetApp() async {
-    // Strategy 1: explicit component name (most reliable when known).
-    try {
-      final intent = AndroidIntent(
-        action: 'android.intent.action.MAIN',
-        package: kTargetAppPackage,
-        componentName: '$kTargetAppPackage/.activities.MainActivity',
-        flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
-      );
-      await intent.launch();
-      return; // success — done
-    } catch (e1) {
-      debugPrint('Launch strategy 1 failed: $e1');
-    }
+  // Channel must match the constant defined in MainActivity.kt
+  static const _launcherChannel = MethodChannel('com.tucuvpn.tucuvpn/launcher');
 
-    // Strategy 2: package only, let Android resolve the launcher activity.
+  /// Uses PackageManager on the native side to find the real launcher Activity
+  /// (CATEGORY_LAUNCHER then CATEGORY_LEANBACK_LAUNCHER as fallback) and
+  /// starts it with FLAG_ACTIVITY_NEW_TASK — the same way a TV launcher opens apps.
+  Future<void> _launchTargetApp() async {
     try {
-      final intent = AndroidIntent(
-        action: 'android.intent.action.MAIN',
-        package: kTargetAppPackage,
-        flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+      final success = await _launcherChannel.invokeMethod<bool>(
+        'launchApp',
+        {'packageName': kTargetAppPackage},
       );
-      await intent.launch();
-      return; // success — done
-    } catch (e2) {
-      debugPrint('Launch strategy 2 failed: $e2');
-      // Surface the real error so it's visible while debugging.
-      state = state.copyWith(
-        launchError: 'Error al abrir app: $e2',
-      );
+
+      if (success != true) {
+        debugPrint('launchApp returned false — app not found: $kTargetAppPackage');
+        state = state.copyWith(launchError: 'App destino no encontrada: $kTargetAppPackage');
+      }
+    } catch (e) {
+      debugPrint('launchApp channel error: $e');
+      state = state.copyWith(launchError: 'Error al abrir app: $e');
     }
   }
 }
