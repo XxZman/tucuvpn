@@ -118,10 +118,26 @@ class VpnHelper(private val activity: Activity) {
             eventSink?.success("log:config preview: $preview")
         }
 
+        // Strip comment and blank lines before handing to the parser.
+        // Some VPN Gate / SoftEther configs start with many ### lines that
+        // confuse the nizwar ConfigParser and cause a parse failure.
+        val cleanConfig = config.lines()
+            .filter { line ->
+                val trimmed = line.trim()
+                trimmed.isNotEmpty() && !trimmed.startsWith("#") && !trimmed.startsWith(";")
+            }
+            .joinToString("\n")
+
+        val cleanPreview = cleanConfig.lines().take(3).joinToString(" | ")
+        android.util.Log.d("VpnHelper", "startVpn clean_preview=[$cleanPreview]")
+        activity.runOnUiThread {
+            eventSink?.success("log:clean config: $cleanPreview")
+        }
+
         try {
             // Pass an empty ArrayList — NOT null — because the library iterates
             // bypassPackages with .size() and crashes on a null reference.
-            helper.startVPN(config, "vpn", "vpn", name, arrayListOf())
+            helper.startVPN(cleanConfig, "vpn", "vpn", name, arrayListOf())
         } catch (e: Exception) {
             val msg = "error:${e.javaClass.simpleName}: ${e.message}"
             android.util.Log.e("VpnHelper", "startVPN threw: $msg", e)
