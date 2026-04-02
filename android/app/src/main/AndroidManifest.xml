@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Network access -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <!-- VPN tunnel -->
     <uses-permission android:name="android.permission.BIND_VPN_SERVICE"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <!-- Foreground service (required by openvpn_flutter) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED"
+        android:minSdkVersion="34"/>
+    <!-- Notifications for VPN status -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <!-- ── Android TV / Fire TV / BTV Box ──────────────────────────────── -->
     <!-- required="false" so the APK also installs on phones/tablets       -->
@@ -55,13 +64,22 @@
             android:name="flutterEmbedding"
             android:value="2"/>
 
+        <!-- OpenVPN tunnel service (de.blinkt.openvpn / ics-openvpn) -->
         <service
-            android:name="net.openvpn.ovpn3.OpenVPNService"
+            android:name="de.blinkt.openvpn.core.OpenVPNService"
             android:permission="android.permission.BIND_VPN_SERVICE"
-            android:exported="true">
+            android:foregroundServiceType="systemExempted"
+            android:exported="true"
+            android:process=":openvpn"
+            tools:replace="android:exported">
             <intent-filter>
                 <action android:name="android.net.VpnService"/>
             </intent-filter>
         </service>
+
+        <service
+            android:name="de.blinkt.openvpn.core.OpenVPNStatusService"
+            android:exported="false"
+            android:process=":openvpn"/>
     </application>
 </manifest>
