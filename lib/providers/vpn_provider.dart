@@ -110,19 +110,28 @@ class VpnNotifier extends Notifier<VpnState> {
     );
 
     try {
+      debugPrint('=== TUCUVPN: Loading config for ${servers[index].name}');
+      debugPrint('=== TUCUVPN: Config path: ${servers[index].configPath}');
+
       final config = await rootBundle.loadString(servers[index].configPath);
 
-      // The plugin requests VPN permission internally on Android when connect() is called.
+      debugPrint('=== TUCUVPN: Config loaded, length: ${config.length}');
+      debugPrint('=== TUCUVPN: Calling _vpn.connect()');
+
       _vpn.connect(config, servers[index].name, certIsRequired: false);
+
+      debugPrint('=== TUCUVPN: connect() called successfully');
 
       _failoverTimer?.cancel();
       _failoverTimer = Timer(
         const Duration(seconds: kVpnFailoverSeconds),
         () {
+          debugPrint('=== TUCUVPN: Failover timer fired for index $index');
           if (_isConnecting) _tryNextServer();
         },
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('=== TUCUVPN: Error in _tryServer: $e');
       _tryNextServer();
     }
   }
