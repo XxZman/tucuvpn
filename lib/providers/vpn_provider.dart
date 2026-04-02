@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:android_intent_plus/flag.dart';
@@ -51,14 +50,13 @@ class VpnNotifier extends Notifier<VpnState> {
   @override
   VpnState build() {
     _vpn = OpenVPN(
-      onVpnStatusChange: _onStatusChange,
-      onVpnStageChange: _onStageChange,
+      onVpnStatusChanged: _onStatusChange,
+      onVpnStageChanged: _onStageChange,
     );
     _vpn.initialize(
       groupIdentifier: 'group.com.tucuvpn.vpn',
       localizedDescription: 'TucuVPN',
       lastStage: (_) {},
-      lastConfig: (_) {},
     );
     ref.onDispose(() {
       _failoverTimer?.cancel();
@@ -106,14 +104,7 @@ class VpnNotifier extends Notifier<VpnState> {
     try {
       final config = await rootBundle.loadString(servers[index].configPath);
 
-      if (Platform.isAndroid) {
-        final granted = await OpenVPN.requestPermissionAndroid();
-        if (granted != true) {
-          _handleAllFailed(reason: 'Permiso VPN denegado');
-          return;
-        }
-      }
-
+      // The plugin requests VPN permission internally on Android when connect() is called.
       _vpn.connect(config, servers[index].name, certIsRequired: false);
 
       _failoverTimer?.cancel();
