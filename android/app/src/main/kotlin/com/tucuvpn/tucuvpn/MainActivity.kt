@@ -32,50 +32,59 @@ class MainActivity : FlutterActivity() {
     }
 
     /**
-     * Finds the launcher Activity for [packageName] via PackageManager and
-     * starts it with FLAG_ACTIVITY_NEW_TASK — identical to how a TV launcher
-     * would open an app.  Returns true on success, false if the app is not
-     * found or cannot be started.
+     * Tries three strategies in order to launch [packageName]:
+     *   1. CATEGORY_LEANBACK_LAUNCHER  — primary for Android TV apps
+     *   2. CATEGORY_LAUNCHER           — fallback for hybrid / phone apps
+     *   3. Package name only           — last resort, no category
+     * Returns true on success, false if nothing worked.
      */
     private fun launchApp(packageName: String): Boolean {
-        return try {
-            val pm: PackageManager = packageManager
+        val pm: PackageManager = packageManager
 
-            // Build an intent that matches what the launcher broadcasts
-            val queryIntent = Intent(Intent.ACTION_MAIN).apply {
+        // ── Strategy 1: LEANBACK_LAUNCHER (Android TV / Fire TV) ─────────────
+        pm.queryIntentActivities(
+            Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
+                setPackage(packageName)
+            }, 0
+        ).firstOrNull()?.activityInfo?.let { info ->
+            return try {
+                startActivity(Intent(Intent.ACTION_MAIN).apply {
+                    addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
+                    component = ComponentName(info.packageName, info.name)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                })
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
+
+        // ── Strategy 2: CATEGORY_LAUNCHER (standard / hybrid apps) ───────────
+        pm.queryIntentActivities(
+            Intent(Intent.ACTION_MAIN).apply {
                 addCategory(Intent.CATEGORY_LAUNCHER)
                 setPackage(packageName)
-            }
-
-            val activities = pm.queryIntentActivities(queryIntent, 0)
-
-            if (activities.isEmpty()) {
-                // Also try LEANBACK_LAUNCHER for Android TV apps
-                val tvQueryIntent = Intent(Intent.ACTION_MAIN).apply {
-                    addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
-                    setPackage(packageName)
-                }
-                val tvActivities = pm.queryIntentActivities(tvQueryIntent, 0)
-
-                if (tvActivities.isEmpty()) return false
-
-                val activityInfo = tvActivities[0].activityInfo
-                val launchIntent = Intent(Intent.ACTION_MAIN).apply {
-                    addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
-                    component = ComponentName(activityInfo.packageName, activityInfo.name)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                startActivity(launchIntent)
-            } else {
-                val activityInfo = activities[0].activityInfo
-                val launchIntent = Intent(Intent.ACTION_MAIN).apply {
+            }, 0
+        ).firstOrNull()?.activityInfo?.let { info ->
+            return try {
+                startActivity(Intent(Intent.ACTION_MAIN).apply {
                     addCategory(Intent.CATEGORY_LAUNCHER)
-                    component = ComponentName(activityInfo.packageName, activityInfo.name)
+                    component = ComponentName(info.packageName, info.name)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                startActivity(launchIntent)
+                })
+                true
+            } catch (e: Exception) {
+                false
             }
+        }
 
+        // ── Strategy 3: package name only, no category ────────────────────────
+        return try {
+            startActivity(Intent(Intent.ACTION_MAIN).apply {
+                setPackage(packageName)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            })
             true
         } catch (e: Exception) {
             false
