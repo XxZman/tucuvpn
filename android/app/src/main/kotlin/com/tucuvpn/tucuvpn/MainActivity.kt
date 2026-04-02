@@ -3,6 +3,7 @@ package com.tucuvpn.tucuvpn
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import id.laskarmedia.openvpn_flutter.OpenVPNFlutterPlugin
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -11,6 +12,13 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val CHANNEL = "com.tucuvpn.tucuvpn/launcher"
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == 24) {
+            OpenVPNFlutterPlugin.connectWhileGranted(resultCode == RESULT_OK)
+        }
+        super.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
