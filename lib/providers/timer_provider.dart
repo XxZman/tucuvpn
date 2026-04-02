@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import '../constants.dart';
 import 'settings_provider.dart';
@@ -13,14 +14,28 @@ class TimerNotifier extends Notifier<int> {
   @override
   int build() {
     ref.onDispose(() => _timer?.cancel());
-    // Start as soon as the provider is first read.
-    _init();
+    // Start countdown ONLY when VPN connects; reset when it disconnects.
+    ref.listen<VpnState>(vpnProvider, (prev, next) {
+      final wasConnected = prev?.connectionState == VpnConnectionState.connected;
+      final isConnected = next.connectionState == VpnConnectionState.connected;
+      if (!wasConnected && isConnected) {
+        _initAndStart();
+      } else if (wasConnected && !isConnected) {
+        _stopAndReset();
+      }
+    });
     return kDefaultTimerSeconds;
   }
 
-  Future<void> _init() async {
+  Future<void> _initAndStart() async {
     final seconds = await ref.read(settingsProvider.future);
     _start(seconds);
+  }
+
+  Future<void> _stopAndReset() async {
+    _timer?.cancel();
+    final seconds = await ref.read(settingsProvider.future);
+    state = seconds;
   }
 
   void _start(int seconds) {
@@ -44,8 +59,11 @@ class TimerNotifier extends Notifier<int> {
   }
 
   void _expire() {
-    // Disconnect VPN first, then close this app.
-    // The external app launched earlier stays alive.
+    Fluttertoast.showToast(
+      msg: '🔴 VPN Desconectada',
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.BOTTOM,
+    );
     ref.read(vpnProvider.notifier).disconnect();
     Future.delayed(const Duration(milliseconds: 500), () => exit(0));
   }

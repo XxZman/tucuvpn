@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:openvpn_flutter/openvpn_flutter.dart';
 
 import '../constants.dart';
 import '../models/vpn_server.dart';
 import 'servers_provider.dart';
+import 'settings_provider.dart';
 
 enum VpnConnectionState { idle, connecting, connected, failed }
 
@@ -169,6 +171,18 @@ class VpnNotifier extends Notifier<VpnState> {
       );
 
       await _launchTargetApp();
+      Fluttertoast.showToast(
+        msg: '✅ VPN Conectada',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+      );
+      final timerSeconds = await ref.read(settingsProvider.future);
+      await Future.delayed(const Duration(seconds: 4));
+      Fluttertoast.showToast(
+        msg: '⏱️ Te quedan $timerSeconds segundos',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+      );
     } else if (stage == VPNStage.error && _isConnecting) {
       _failoverTimer?.cancel();
       _tryNextServer();

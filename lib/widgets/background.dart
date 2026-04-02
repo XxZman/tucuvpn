@@ -29,7 +29,8 @@ class CyberpunkBackground extends StatelessWidget {
           child: Text(
             'app por BrAM',
             style: GoogleFonts.shareTechMono(
-              fontSize: 11,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
               color: kWatermark,
             ),
           ),

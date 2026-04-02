@@ -134,7 +134,7 @@ class _ServerCardState extends State<ServerCard>
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
-                    widget.server.name.toUpperCase(),
+                    '${widget.server.name.toUpperCase()} (${widget.server.fileCount})',
                     style: GoogleFonts.rajdhani(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,

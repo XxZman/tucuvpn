@@ -22,4 +22,4 @@ const Color kBorder  = Color(0xFF1E1E2E);
 const Color kCyan    = Color(0xFF00FFD1);
 const Color kPink    = Color(0xFFFF2D6B);
 const Color kText    = Color(0xFFE0E0FF);
-const Color kWatermark = Color(0x18FFFFFF);
+const Color kWatermark = Color(0x30FFFFFF);

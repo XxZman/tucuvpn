@@ -5,6 +5,7 @@ class VpnServer {
   final String name;
   final String flag;
   final String configPath;
+  final int fileCount;
   final ServerStatus status;
 
   const VpnServer({
@@ -12,6 +13,7 @@ class VpnServer {
     required this.name,
     required this.flag,
     required this.configPath,
+    this.fileCount = 0,
     this.status = ServerStatus.idle,
   });
 
@@ -20,6 +22,7 @@ class VpnServer {
         name: name,
         flag: flag,
         configPath: configPath,
+        fileCount: fileCount,
         status: status ?? this.status,
       );
 }
@@ -30,23 +33,27 @@ const List<VpnServer> kServers = [
     name: 'Brasil',
     flag: '🇧🇷',
     configPath: 'assets/configs/brazil.ovpn',
+    fileCount: 0,
   ),
   VpnServer(
     id: 'japan',
     name: 'Japón',
     flag: '🇯🇵',
     configPath: 'assets/configs/japan.ovpn',
+    fileCount: 39,
   ),
   VpnServer(
     id: 'canada',
     name: 'Canadá',
     flag: '🇨🇦',
     configPath: 'assets/configs/canada.ovpn',
+    fileCount: 2,
   ),
   VpnServer(
     id: 'usa',
     name: 'EEUU',
     flag: '🇺🇸',
     configPath: 'assets/configs/usa.ovpn',
+    fileCount: 3,
   ),
 ];

@@ -17,7 +17,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Ensure timer provider is initialised (starts the countdown).
+    // Initialise timer provider — countdown starts only when VPN connects.
     ref.watch(timerProvider);
 
     // Show a SnackBar when the target app could not be launched.
