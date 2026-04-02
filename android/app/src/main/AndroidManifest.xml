@@ -7,15 +7,21 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <!-- VPN tunnel -->
-    <uses-permission android:name="android.permission.BIND_VPN_SERVICE"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
     <!-- Foreground service (required by openvpn_flutter) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SYSTEM_EXEMPTED"
-        android:minSdkVersion="34"/>
     <!-- Notifications for VPN status -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Boot auto-reconnect -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Read .ovpn config files from storage -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <!-- Dynamic receiver protection (ics-openvpn internal) -->
+    <permission
+        android:name="de.blinkt.openvpn.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        android:protectionLevel="signature"/>
+    <uses-permission android:name="de.blinkt.openvpn.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"/>
 
     <!-- ── Android TV / Fire TV / BTV Box ──────────────────────────────── -->
     <!-- required="false" so the APK also installs on phones/tablets       -->
@@ -31,6 +37,8 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:banner="@mipmap/ic_launcher"
+        android:appCategory="productivity"
+        android:extractNativeLibs="true"
         android:hardwareAccelerated="true">
 
         <activity
@@ -68,18 +76,28 @@
         <service
             android:name="de.blinkt.openvpn.core.OpenVPNService"
             android:permission="android.permission.BIND_VPN_SERVICE"
-            android:foregroundServiceType="systemExempted"
+            android:foregroundServiceType="specialUse"
             android:exported="true"
             android:process=":openvpn"
             tools:replace="android:exported">
             <intent-filter>
                 <action android:name="android.net.VpnService"/>
             </intent-filter>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="vpn"/>
         </service>
 
         <service
             android:name="de.blinkt.openvpn.core.OpenVPNStatusService"
             android:exported="false"
+            android:process=":openvpn"/>
+
+        <!-- Keeps the VPN connection alive via Android JobScheduler -->
+        <service
+            android:name="de.blinkt.openvpn.core.keepVPNAlive"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="true"
             android:process=":openvpn"/>
     </application>
 </manifest>
