@@ -21,10 +21,10 @@ class MainActivity : FlutterActivity() {
     private lateinit var vpnHelper: VpnHelper
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == VpnHelper.VPN_REQUEST_CODE) {
             vpnHelper.onPermissionResult(resultCode == RESULT_OK)
         }
-        super.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

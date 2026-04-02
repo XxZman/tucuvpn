@@ -81,7 +81,7 @@ class VpnHelper(private val activity: Activity) {
     }
 
     fun disconnect() {
-        helper.stopVPN()
+        try { helper.stopVPN() } catch (_: Exception) {}
         activity.runOnUiThread { eventSink?.success("disconnected") }
     }
 }

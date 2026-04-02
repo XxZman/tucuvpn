@@ -74,14 +74,19 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
         .listen((dynamic raw) => _onRawStage(raw as String));
 
     // Clean up any leftover VPN session from a previous run.
-    _vpnChannel.invokeMethod<void>('disconnect');
+    // Delayed so the EventChannel onListen fires first (Bug 3 race condition).
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      try {
+        await _vpnChannel.invokeMethod<void>('disconnect');
+      } catch (_) {}
+    });
 
     WidgetsBinding.instance.addObserver(this);
     ref.onDispose(() {
       WidgetsBinding.instance.removeObserver(this);
       _failoverTimer?.cancel();
       _stageSub?.cancel();
-      _vpnChannel.invokeMethod<void>('disconnect');
+      try { await _vpnChannel.invokeMethod<void>('disconnect'); } catch (_) {}
     });
     return const VpnState();
   }
@@ -110,7 +115,7 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
     _attemptIndex = 0;
     _configIndex  = 0;
     _startIndex   = 0;
-    await _vpnChannel.invokeMethod<void>('disconnect');
+    try { await _vpnChannel.invokeMethod<void>('disconnect'); } catch (_) {}
     ref.read(serversProvider.notifier).setAllIdle();
     state = state.copyWith(
       connectionState: VpnConnectionState.idle,
@@ -198,7 +203,7 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
   /// Falls through to _tryNextCountry() when all files are exhausted.
   Future<void> _tryNextConfig() async {
     _failoverTimer?.cancel();
-    await _vpnChannel.invokeMethod<void>('disconnect');
+    try { await _vpnChannel.invokeMethod<void>('disconnect'); } catch (_) {}
 
     final server  = ref.read(serversProvider)[_attemptIndex];
     final nextNum = _configIndex + 2; // 1-based next index
@@ -220,7 +225,7 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
   /// Mark the current country failed and move to the next one.
   Future<void> _tryNextCountry() async {
     _failoverTimer?.cancel();
-    await _vpnChannel.invokeMethod<void>('disconnect');
+    try { await _vpnChannel.invokeMethod<void>('disconnect'); } catch (_) {}
 
     ref.read(serversProvider.notifier).setStatus(_attemptIndex, ServerStatus.failed);
 
