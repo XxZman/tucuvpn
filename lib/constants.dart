@@ -10,7 +10,7 @@ const String kGithubReleasesUrl =
 
 // ─── VPN ─────────────────────────────────────────────────────────────────────
 const int kDefaultTimerSeconds = 60;
-const int kVpnFailoverSeconds = 8;
+const int kVpnFailoverSeconds = 20;
 
 // ─── SharedPreferences ───────────────────────────────────────────────────────
 const String kPrefTimerSeconds = 'timer_seconds';

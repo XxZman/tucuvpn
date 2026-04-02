@@ -161,25 +161,17 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
       debugPrint('=== TUCUVPN: Config loaded, length: ${config.length}');
       debugPrint('=== TUCUVPN: Calling _vpn.connect()');
 
-      // Append compatibility flags for legacy SoftEther/VPN Gate servers.
-      // certIsRequired: true → plugin does NOT append the removed
-      // "client-cert-not-required" directive (removed in OpenVPN 2.4+).
-      // The cert/key are already embedded in every VPN Gate .ovpn file.
-      final patchedConfig = config + '''
-tls-client
-tls-version-min 1.0
-allow-compression yes
-data-ciphers AES-128-CBC:AES-256-CBC:BF-CBC
-data-ciphers-fallback AES-128-CBC
-reneg-sec 0
-mute-replay-warnings
-''';
+      // Uncomment auth-user-pass (VPN Gate configs ship with it commented out)
+      // and append legacy cipher compatibility for SoftEther servers.
+      final patchedConfig = config
+          .replaceAll('#auth-user-pass', 'auth-user-pass')
+          + '\ndata-ciphers AES-128-CBC:AES-256-CBC\ndata-ciphers-fallback AES-128-CBC\nreneg-sec 0\n';
 
       ref.read(logProvider.notifier).add('› Autenticando...');
       _vpn.connect(
         patchedConfig,
         server.name,
-        certIsRequired: true,
+        certIsRequired: false,
         username: 'vpn',
         password: 'vpn',
       );
