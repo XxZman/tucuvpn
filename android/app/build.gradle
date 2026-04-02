@@ -44,7 +44,12 @@ android {
     }
 
     packagingOptions {
-        pickFirst '**/*.so'
+        pickFirst '**/libopenvpn.so'
+        pickFirst '**/libovpnexec.so'
+        pickFirst '**/libovpn3.so'
+        pickFirst '**/libovpnutil.so'
+        pickFirst '**/libosslutil.so'
+        pickFirst '**/libosslspeedtest.so'
     }
 }
 
