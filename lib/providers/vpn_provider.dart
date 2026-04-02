@@ -51,8 +51,9 @@ class VpnState {
 class VpnNotifier extends Notifier<VpnState> {
   late final OpenVPN _vpn;
   Timer? _failoverTimer;
-  int _attemptIndex = 0;
-  int _startIndex = 0;
+  int _attemptIndex = 0; // which country (index into kServers)
+  int _startIndex = 0;   // country the user picked
+  int _configIndex = 0;  // which config file within the current country
   bool _isConnecting = false;
 
   @override
@@ -79,7 +80,8 @@ class VpnNotifier extends Notifier<VpnState> {
     if (_isConnecting || state.isConnected) return;
     _startIndex = serverIndex;
     _attemptIndex = serverIndex;
-    await _tryServer(_attemptIndex);
+    _configIndex = 0;
+    await _tryCurrentConfig();
   }
 
   Future<void> disconnect() async {
@@ -94,31 +96,50 @@ class VpnNotifier extends Notifier<VpnState> {
     );
   }
 
-  // ─── Failover loop ─────────────────────────────────────────────────────────
+  // ─── Two-level failover: config files within a country, then next country ──
 
-  Future<void> _tryServer(int index) async {
+  Future<void> _tryCurrentConfig() async {
     _isConnecting = true;
     final servers = ref.read(serversProvider);
+    final server = servers[_attemptIndex];
+    final configs = server.configPaths;
+
+    // Country has no config files — skip straight to next country.
+    if (configs.isEmpty) {
+      debugPrint('=== TUCUVPN: No configs for ${server.name}, skipping country');
+      await _tryNextCountry();
+      return;
+    }
+
+    // All configs for this country exhausted.
+    if (_configIndex >= configs.length) {
+      await _tryNextCountry();
+      return;
+    }
+
+    final configPath = configs[_configIndex];
+    final configNum = _configIndex + 1;
+    final total = configs.length;
 
     ref.read(serversProvider.notifier).setAllIdle();
-    ref.read(serversProvider.notifier).setStatus(index, ServerStatus.trying);
+    ref.read(serversProvider.notifier).setStatus(_attemptIndex, ServerStatus.trying);
 
     state = state.copyWith(
       connectionState: VpnConnectionState.connecting,
-      statusMessage: 'Conectando a ${servers[index].name}…',
+      statusMessage: 'Conectando a ${server.name} ($configNum/$total)…',
       clearActive: true,
     );
 
     try {
-      debugPrint('=== TUCUVPN: Loading config for ${servers[index].name}');
-      debugPrint('=== TUCUVPN: Config path: ${servers[index].configPath}');
+      debugPrint('=== TUCUVPN: Trying ${server.name} $configNum/$total');
+      debugPrint('=== TUCUVPN: Config path: $configPath');
 
-      final config = await rootBundle.loadString(servers[index].configPath);
+      final config = await rootBundle.loadString(configPath);
 
       debugPrint('=== TUCUVPN: Config loaded, length: ${config.length}');
       debugPrint('=== TUCUVPN: Calling _vpn.connect()');
 
-      _vpn.connect(config, servers[index].name, certIsRequired: false);
+      _vpn.connect(config, server.name, certIsRequired: false);
 
       debugPrint('=== TUCUVPN: connect() called successfully');
 
@@ -126,22 +147,40 @@ class VpnNotifier extends Notifier<VpnState> {
       _failoverTimer = Timer(
         const Duration(seconds: kVpnFailoverSeconds),
         () {
-          debugPrint('=== TUCUVPN: Failover timer fired for index $index');
-          if (_isConnecting) _tryNextServer();
+          debugPrint('=== TUCUVPN: Failover timer fired for ${server.name} $configNum/$total');
+          if (_isConnecting) _tryNextConfig();
         },
       );
     } catch (e) {
-      debugPrint('=== TUCUVPN: Error in _tryServer: $e');
-      _tryNextServer();
+      debugPrint('=== TUCUVPN: Error loading config: $e');
+      _tryNextConfig();
     }
   }
 
-  Future<void> _tryNextServer() async {
+  /// Move to the next config file within the same country.
+  /// Falls through to _tryNextCountry() when all files are exhausted.
+  Future<void> _tryNextConfig() async {
+    _failoverTimer?.cancel();
+    _vpn.disconnect();
+    _configIndex++;
+
+    final configs = ref.read(serversProvider)[_attemptIndex].configPaths;
+    if (_configIndex < configs.length) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      await _tryCurrentConfig();
+    } else {
+      await _tryNextCountry();
+    }
+  }
+
+  /// Mark the current country failed and move to the next one.
+  Future<void> _tryNextCountry() async {
     _failoverTimer?.cancel();
     _vpn.disconnect();
 
     ref.read(serversProvider.notifier).setStatus(_attemptIndex, ServerStatus.failed);
 
+    _configIndex = 0;
     _attemptIndex = (_attemptIndex + 1) % kServers.length;
 
     if (_attemptIndex == _startIndex) {
@@ -150,7 +189,7 @@ class VpnNotifier extends Notifier<VpnState> {
     }
 
     await Future.delayed(const Duration(milliseconds: 400));
-    await _tryServer(_attemptIndex);
+    await _tryCurrentConfig();
   }
 
   void _handleAllFailed({String reason = 'Todos los servidores fallaron'}) {
@@ -194,7 +233,7 @@ class VpnNotifier extends Notifier<VpnState> {
       );
     } else if (stage == VPNStage.error && _isConnecting) {
       _failoverTimer?.cancel();
-      _tryNextServer();
+      _tryNextConfig();
     } else if (stage == VPNStage.disconnected && !_isConnecting) {
       ref.read(serversProvider.notifier).setAllIdle();
       state = state.copyWith(

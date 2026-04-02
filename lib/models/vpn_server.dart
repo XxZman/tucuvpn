@@ -4,7 +4,7 @@ class VpnServer {
   final String id;
   final String name;
   final String flag;
-  final String configPath;
+  final String configPrefix; // e.g. "JP", "CA", "US", "BR"
   final int fileCount;
   final ServerStatus status;
 
@@ -12,16 +12,22 @@ class VpnServer {
     required this.id,
     required this.name,
     required this.flag,
-    required this.configPath,
+    required this.configPrefix,
     this.fileCount = 0,
     this.status = ServerStatus.idle,
   });
+
+  /// All asset paths for this country in order: PREFIX_1.ovpn, PREFIX_2.ovpn, …
+  List<String> get configPaths => List.generate(
+        fileCount,
+        (i) => 'assets/configs/${configPrefix}_${i + 1}.ovpn',
+      );
 
   VpnServer copyWith({ServerStatus? status}) => VpnServer(
         id: id,
         name: name,
         flag: flag,
-        configPath: configPath,
+        configPrefix: configPrefix,
         fileCount: fileCount,
         status: status ?? this.status,
       );
@@ -32,28 +38,28 @@ const List<VpnServer> kServers = [
     id: 'brazil',
     name: 'Brasil',
     flag: '🇧🇷',
-    configPath: 'assets/configs/brazil.ovpn',
+    configPrefix: 'BR',
     fileCount: 0,
   ),
   VpnServer(
     id: 'japan',
     name: 'Japón',
     flag: '🇯🇵',
-    configPath: 'assets/configs/japan.ovpn',
+    configPrefix: 'JP',
     fileCount: 39,
   ),
   VpnServer(
     id: 'canada',
     name: 'Canadá',
     flag: '🇨🇦',
-    configPath: 'assets/configs/canada.ovpn',
+    configPrefix: 'CA',
     fileCount: 2,
   ),
   VpnServer(
     id: 'usa',
     name: 'EEUU',
     flag: '🇺🇸',
-    configPath: 'assets/configs/usa.ovpn',
+    configPrefix: 'US',
     fileCount: 3,
   ),
 ];
