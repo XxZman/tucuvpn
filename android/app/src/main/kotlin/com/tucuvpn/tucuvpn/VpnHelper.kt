@@ -69,7 +69,9 @@ class VpnHelper(private val activity: Activity) {
                 startVpn(config, name)
             }
         } catch (e: Exception) {
-            activity.runOnUiThread { eventSink?.success("error") }
+            val msg = "error:${e.javaClass.simpleName}: ${e.message}"
+            android.util.Log.e("VpnHelper", "connect() threw: $msg", e)
+            activity.runOnUiThread { eventSink?.success(msg) }
         }
     }
 
@@ -102,11 +104,20 @@ class VpnHelper(private val activity: Activity) {
      * 20-second interval instead of triggering an immediate PlatformException.
      */
     private fun startVpn(config: String, name: String) {
+        // Log the first 3 lines of the config so we can verify it arrives intact.
+        val preview = config.lines().take(3).joinToString(" | ")
+        android.util.Log.d("VpnHelper", "startVpn: name=$name config_preview=[$preview]")
+        activity.runOnUiThread {
+            eventSink?.success("log:config preview: $preview")
+        }
+
         try {
             // VPN Gate / SoftEther servers use username "vpn" / password "vpn".
             helper.startVPN(config, "vpn", "vpn", name, null)
         } catch (e: Exception) {
-            activity.runOnUiThread { eventSink?.success("error") }
+            val msg = "error:${e.javaClass.simpleName}: ${e.message}"
+            android.util.Log.e("VpnHelper", "startVPN threw: $msg", e)
+            activity.runOnUiThread { eventSink?.success(msg) }
         }
     }
 

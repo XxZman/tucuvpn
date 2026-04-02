@@ -260,6 +260,20 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
   Future<void> _onRawStage(String stage) async {
     debugPrint('=== TUCUVPN: stage=$stage  connecting=$_isConnecting');
 
+    // Debug log lines from VpnHelper — show in console, don't change state.
+    if (stage.startsWith('log:')) {
+      ref.read(logProvider.notifier).add('  [dbg] ${stage.substring(4)}');
+      return;
+    }
+
+    // Detailed error messages from VpnHelper (e.g. "error:IOException: …").
+    if (stage.startsWith('error:') && _isConnecting) {
+      ref.read(logProvider.notifier).add('✗ ${stage}');
+      _failoverTimer?.cancel();
+      _tryNextConfig();
+      return;
+    }
+
     if (_isConnected(stage)) {
       _failoverTimer?.cancel();
       _isConnecting = false;
