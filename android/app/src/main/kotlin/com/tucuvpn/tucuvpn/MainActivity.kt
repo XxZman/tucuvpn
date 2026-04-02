@@ -32,60 +32,48 @@ class MainActivity : FlutterActivity() {
     }
 
     /**
-     * Tries three strategies in order to launch [packageName]:
-     *   1. CATEGORY_LEANBACK_LAUNCHER  — primary for Android TV apps
-     *   2. CATEGORY_LAUNCHER           — fallback for hybrid / phone apps
-     *   3. Package name only           — last resort, no category
+     * Mirrors AutoVPN's launch approach. Tries three strategies in order:
+     *   1. getLeanbackLaunchIntentForPackage — built-in TV launcher resolution
+     *   2. queryIntentActivities with LEANBACK_LAUNCHER — explicit component
+     *   3. getLaunchIntentForPackage — regular LAUNCHER fallback
      * Returns true on success, false if nothing worked.
      */
     private fun launchApp(packageName: String): Boolean {
-        val pm: PackageManager = packageManager
-
-        // ── Strategy 1: LEANBACK_LAUNCHER (Android TV / Fire TV) ─────────────
-        pm.queryIntentActivities(
-            Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
-                setPackage(packageName)
-            }, 0
-        ).firstOrNull()?.activityInfo?.let { info ->
-            return try {
-                startActivity(Intent(Intent.ACTION_MAIN).apply {
-                    addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
-                    component = ComponentName(info.packageName, info.name)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                })
-                true
-            } catch (e: Exception) {
-                false
-            }
-        }
-
-        // ── Strategy 2: CATEGORY_LAUNCHER (standard / hybrid apps) ───────────
-        pm.queryIntentActivities(
-            Intent(Intent.ACTION_MAIN).apply {
-                addCategory(Intent.CATEGORY_LAUNCHER)
-                setPackage(packageName)
-            }, 0
-        ).firstOrNull()?.activityInfo?.let { info ->
-            return try {
-                startActivity(Intent(Intent.ACTION_MAIN).apply {
-                    addCategory(Intent.CATEGORY_LAUNCHER)
-                    component = ComponentName(info.packageName, info.name)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                })
-                true
-            } catch (e: Exception) {
-                false
-            }
-        }
-
-        // ── Strategy 3: package name only, no category ────────────────────────
         return try {
-            startActivity(Intent(Intent.ACTION_MAIN).apply {
+            // ── Strategy 1: getLeanbackLaunchIntentForPackage (TV apps) ──────────
+            val intent = packageManager.getLeanbackLaunchIntentForPackage(packageName)
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+                return true
+            }
+
+            // ── Strategy 2: queryIntentActivities with LEANBACK_LAUNCHER ─────────
+            val leanbackIntent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory("android.intent.category.LEANBACK_LAUNCHER")
                 setPackage(packageName)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            })
-            true
+            }
+            val activities = packageManager.queryIntentActivities(leanbackIntent, 0)
+            if (activities.isNotEmpty()) {
+                val ai = activities[0].activityInfo
+                val launchIntent = Intent(Intent.ACTION_MAIN).apply {
+                    addCategory("android.intent.category.LEANBACK_LAUNCHER")
+                    component = ComponentName(ai.packageName, ai.name)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                startActivity(launchIntent)
+                return true
+            }
+
+            // ── Strategy 3: regular LAUNCHER fallback ─────────────────────────────
+            val regularIntent = packageManager.getLaunchIntentForPackage(packageName)
+            if (regularIntent != null) {
+                regularIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(regularIntent)
+                return true
+            }
+
+            false
         } catch (e: Exception) {
             false
         }
