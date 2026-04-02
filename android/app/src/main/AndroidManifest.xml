@@ -17,12 +17,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- Read .ovpn config files from storage -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <!-- Dynamic receiver protection (ics-openvpn internal) -->
-    <permission
-        android:name="de.blinkt.openvpn.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-        android:protectionLevel="signature"/>
-    <uses-permission android:name="de.blinkt.openvpn.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"/>
-
     <!-- ── Android TV / Fire TV / BTV Box ──────────────────────────────── -->
     <!-- required="false" so the APK also installs on phones/tablets       -->
     <uses-feature
