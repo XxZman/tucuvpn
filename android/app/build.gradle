@@ -21,6 +21,9 @@ android {
 
     sourceSets {
         main.java.srcDirs += "src/main/kotlin"
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
     }
 
     defaultConfig {
@@ -38,6 +41,10 @@ android {
             shrinkResources false
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
+    }
+
+    packagingOptions {
+        pickFirst '**/*.so'
     }
 }
 

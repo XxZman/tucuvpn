@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants.dart';
 import '../models/vpn_server.dart';
 import '../services/toast_service.dart';
+import '../services/vpngate_service.dart';
 import 'log_provider.dart';
 import 'servers_provider.dart';
 import 'settings_provider.dart';
@@ -66,6 +67,10 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
   int _configIndex  = 0; // which config file within the current country
   bool _isConnecting = false;
 
+  // Fresh servers downloaded from VPN Gate at connect time.
+  // Keyed by CountryShort (JP, CA, US, BR). Empty if download failed.
+  Map<String, List<VpnGateServer>> _freshConfigs = {};
+
   @override
   VpnState build() {
     // Subscribe to stage events from VpnHelper.kt via EventChannel.
@@ -102,10 +107,12 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
 
   Future<void> connect(int serverIndex) async {
     if (_isConnecting || state.isConnected) return;
-    _startIndex   = serverIndex;
-    _attemptIndex = serverIndex;
-    _configIndex  = 0;
+    _startIndex    = serverIndex;
+    _attemptIndex  = serverIndex;
+    _configIndex   = 0;
+    _freshConfigs  = {};
     ref.read(logProvider.notifier).add('› Lanzando VPN...');
+    await _downloadFreshServers();
     await _tryCurrentConfig();
   }
 
@@ -115,6 +122,7 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
     _attemptIndex = 0;
     _configIndex  = 0;
     _startIndex   = 0;
+    _freshConfigs = {};
     try { await _vpnChannel.invokeMethod<void>('disconnect'); } catch (_) {}
     ref.read(serversProvider.notifier).setAllIdle();
     state = state.copyWith(
@@ -124,49 +132,83 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
     );
   }
 
+  // ─── VPN Gate fresh server download ────────────────────────────────────────
+
+  Future<void> _downloadFreshServers() async {
+    ref.read(logProvider.notifier).add('› Descargando servidores frescos...');
+    try {
+      _freshConfigs = await fetchVpnGateServers();
+      final total = _freshConfigs.values
+          .fold<int>(0, (sum, list) => sum + list.length);
+      ref.read(logProvider.notifier).add('✓ $total servidores encontrados');
+    } catch (e) {
+      debugPrint('=== TUCUVPN: VPN Gate download failed: $e');
+      ref.read(logProvider.notifier)
+          .add('› Sin conexión, usando configs locales...');
+      _freshConfigs = {};
+    }
+  }
+
   // ─── Two-level failover: config files within a country, then next country ──
 
   Future<void> _tryCurrentConfig() async {
     _isConnecting = true;
     final servers = ref.read(serversProvider);
     final server  = servers[_attemptIndex];
-    final configs = server.configPaths;
+    final prefix  = server.configPrefix;
 
-    if (configs.isEmpty) {
+    // Prefer fresh VPN Gate servers for this country; fall back to bundled assets.
+    final liveList   = _freshConfigs[prefix];
+    final usingLive  = liveList != null && liveList.isNotEmpty;
+    final totalConfigs = usingLive ? liveList!.length : server.fileCount;
+
+    if (totalConfigs == 0) {
       debugPrint('=== TUCUVPN: No configs for ${server.name}, skipping country');
-      ref.read(logProvider.notifier).add('› ${server.name}: sin configs, saltando...');
+      ref.read(logProvider.notifier)
+          .add('› ${server.name}: sin configs, saltando...');
       await _tryNextCountry();
       return;
     }
 
-    if (_configIndex >= configs.length) {
+    if (_configIndex >= totalConfigs) {
       await _tryNextCountry();
       return;
     }
 
-    final configPath = configs[_configIndex];
-    final configNum  = _configIndex + 1;
-    final total      = configs.length;
+    final configNum = _configIndex + 1;
 
     ref.read(serversProvider.notifier).setAllIdle();
     ref.read(serversProvider.notifier).setStatus(_attemptIndex, ServerStatus.trying);
 
     state = state.copyWith(
       connectionState: VpnConnectionState.connecting,
-      statusMessage: 'Conectando a ${server.name} ($configNum/$total)…',
+      statusMessage: 'Conectando a ${server.name} ($configNum/$totalConfigs)…',
       clearActive: true,
     );
 
-    ref.read(logProvider.notifier)
-        .add('› Contactando ${server.configPrefix}_$configNum ($configNum/$total)');
+    if (usingLive) {
+      ref.read(logProvider.notifier)
+          .add('› ${server.name} [live] ($configNum/$totalConfigs)');
+    } else {
+      ref.read(logProvider.notifier)
+          .add('› Contactando ${server.configPrefix}_$configNum ($configNum/$totalConfigs)');
+    }
 
     try {
-      debugPrint('=== TUCUVPN: Trying ${server.name} $configNum/$total');
-      debugPrint('=== TUCUVPN: Config path: $configPath');
+      String config;
 
-      final config = await rootBundle.loadString(configPath);
-
-      debugPrint('=== TUCUVPN: Config loaded, length: ${config.length}');
+      if (usingLive) {
+        final liveServer = liveList![_configIndex];
+        debugPrint(
+            '=== TUCUVPN: Trying ${server.name} live $configNum/$totalConfigs (${liveServer.ip})');
+        config = liveServer.configData;
+      } else {
+        final configPath = server.configPaths[_configIndex];
+        debugPrint('=== TUCUVPN: Trying ${server.name} $configNum/$totalConfigs');
+        debugPrint('=== TUCUVPN: Config path: $configPath');
+        config = await rootBundle.loadString(configPath);
+        debugPrint('=== TUCUVPN: Config loaded, length: ${config.length}');
+      }
 
       // Uncomment auth-user-pass (VPN Gate configs ship with it commented out)
       // and append legacy cipher compatibility for SoftEther servers.
@@ -188,7 +230,7 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
         const Duration(seconds: kVpnFailoverSeconds),
         () {
           debugPrint(
-              '=== TUCUVPN: Failover timer fired for ${server.name} $configNum/$total');
+              '=== TUCUVPN: Failover timer fired for ${server.name} $configNum/$totalConfigs');
           if (_isConnecting) _tryNextConfig();
         },
       );
@@ -205,14 +247,22 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
     _failoverTimer?.cancel();
     try { await _vpnChannel.invokeMethod<void>('disconnect'); } catch (_) {}
 
-    final server  = ref.read(serversProvider)[_attemptIndex];
-    final nextNum = _configIndex + 2; // 1-based next index
+    final server     = ref.read(serversProvider)[_attemptIndex];
+    final prefix     = server.configPrefix;
+    final liveList   = _freshConfigs[prefix];
+    final usingLive  = liveList != null && liveList.isNotEmpty;
+    final totalConfigs = usingLive ? liveList!.length : server.fileCount;
+    final nextNum    = _configIndex + 2; // 1-based next index
     _configIndex++;
 
-    final configs = server.configPaths;
-    if (_configIndex < configs.length) {
-      ref.read(logProvider.notifier)
-          .add('› Fallo, probando ${server.configPrefix}_$nextNum...');
+    if (_configIndex < totalConfigs) {
+      if (usingLive) {
+        ref.read(logProvider.notifier)
+            .add('› Fallo, probando servidor live $nextNum...');
+      } else {
+        ref.read(logProvider.notifier)
+            .add('› Fallo, probando ${server.configPrefix}_$nextNum...');
+      }
       await Future.delayed(const Duration(milliseconds: 400));
       await _tryCurrentConfig();
     } else {
