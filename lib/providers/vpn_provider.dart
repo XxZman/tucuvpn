@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:openvpn_flutter/openvpn_flutter.dart';
 
 import '../constants.dart';
 import '../models/vpn_server.dart';
@@ -50,33 +49,39 @@ class VpnState {
       );
 }
 
+// ─── Channel constants (must match MainActivity.kt / VpnHelper.kt) ───────────
+const _vpnChannel      = MethodChannel('com.tucuvpn.tucuvpn/vpn');
+const _vpnStageChannel = EventChannel('com.tucuvpn.tucuvpn/vpnstage');
+
+// ─── Stage classification helpers ────────────────────────────────────────────
+bool _isConnected(String s)     => s == 'connected';
+bool _isError(String s)         => s == 'error' || s == 'auth_failed' || s == 'denied';
+bool _isDisconnected(String s)  => s == 'disconnected' || s == 'exiting' || s == 'nonetwork';
+
 class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
-  late final OpenVPN _vpn;
+  StreamSubscription<dynamic>? _stageSub;
   Timer? _failoverTimer;
   int _attemptIndex = 0; // which country (index into kServers)
-  int _startIndex = 0;   // country the user picked
-  int _configIndex = 0;  // which config file within the current country
+  int _startIndex   = 0; // country the user picked
+  int _configIndex  = 0; // which config file within the current country
   bool _isConnecting = false;
 
   @override
   VpnState build() {
-    _vpn = OpenVPN(
-      onVpnStatusChanged: _onStatusChange,
-      onVpnStageChanged: _onStageChange,
-    );
-    _vpn.initialize(
-      groupIdentifier: 'group.com.tucuvpn.vpn',
-      localizedDescription: 'TucuVPN',
-      lastStage: (_) {},
-    );
+    // Subscribe to stage events from VpnHelper.kt via EventChannel.
+    _stageSub = _vpnStageChannel
+        .receiveBroadcastStream()
+        .listen((dynamic raw) => _onRawStage(raw as String));
+
     // Clean up any leftover VPN session from a previous run.
-    _vpn.disconnect();
+    _vpnChannel.invokeMethod<void>('disconnect');
 
     WidgetsBinding.instance.addObserver(this);
     ref.onDispose(() {
       WidgetsBinding.instance.removeObserver(this);
       _failoverTimer?.cancel();
-      _vpn.disconnect();
+      _stageSub?.cancel();
+      _vpnChannel.invokeMethod<void>('disconnect');
     });
     return const VpnState();
   }
@@ -92,9 +97,9 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
 
   Future<void> connect(int serverIndex) async {
     if (_isConnecting || state.isConnected) return;
-    _startIndex = serverIndex;
+    _startIndex   = serverIndex;
     _attemptIndex = serverIndex;
-    _configIndex = 0;
+    _configIndex  = 0;
     ref.read(logProvider.notifier).add('› Lanzando VPN...');
     await _tryCurrentConfig();
   }
@@ -103,9 +108,9 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
     _failoverTimer?.cancel();
     _isConnecting = false;
     _attemptIndex = 0;
-    _configIndex = 0;
-    _startIndex = 0;
-    _vpn.disconnect();
+    _configIndex  = 0;
+    _startIndex   = 0;
+    await _vpnChannel.invokeMethod<void>('disconnect');
     ref.read(serversProvider.notifier).setAllIdle();
     state = state.copyWith(
       connectionState: VpnConnectionState.idle,
@@ -119,10 +124,9 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
   Future<void> _tryCurrentConfig() async {
     _isConnecting = true;
     final servers = ref.read(serversProvider);
-    final server = servers[_attemptIndex];
+    final server  = servers[_attemptIndex];
     final configs = server.configPaths;
 
-    // Country has no config files — skip straight to next country.
     if (configs.isEmpty) {
       debugPrint('=== TUCUVPN: No configs for ${server.name}, skipping country');
       ref.read(logProvider.notifier).add('› ${server.name}: sin configs, saltando...');
@@ -130,15 +134,14 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
       return;
     }
 
-    // All configs for this country exhausted.
     if (_configIndex >= configs.length) {
       await _tryNextCountry();
       return;
     }
 
     final configPath = configs[_configIndex];
-    final configNum = _configIndex + 1;
-    final total = configs.length;
+    final configNum  = _configIndex + 1;
+    final total      = configs.length;
 
     ref.read(serversProvider.notifier).setAllIdle();
     ref.read(serversProvider.notifier).setStatus(_attemptIndex, ServerStatus.trying);
@@ -159,22 +162,19 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
       final config = await rootBundle.loadString(configPath);
 
       debugPrint('=== TUCUVPN: Config loaded, length: ${config.length}');
-      debugPrint('=== TUCUVPN: Calling _vpn.connect()');
 
       // Uncomment auth-user-pass (VPN Gate configs ship with it commented out)
       // and append legacy cipher compatibility for SoftEther servers.
       final patchedConfig = config
-          .replaceAll('#auth-user-pass', 'auth-user-pass')
-          + '\ndata-ciphers AES-128-CBC:AES-256-CBC\ndata-ciphers-fallback AES-128-CBC\nreneg-sec 0\n';
+              .replaceAll('#auth-user-pass', 'auth-user-pass') +
+          '\ndata-ciphers AES-128-CBC:AES-256-CBC\ndata-ciphers-fallback AES-128-CBC\nreneg-sec 0\n';
 
       ref.read(logProvider.notifier).add('› Autenticando...');
-      _vpn.connect(
-        patchedConfig,
-        server.name,
-        certIsRequired: false,
-        username: 'vpn',
-        password: 'vpn',
-      );
+
+      await _vpnChannel.invokeMethod<void>('connect', {
+        'config': patchedConfig,
+        'name': server.name,
+      });
 
       debugPrint('=== TUCUVPN: connect() called successfully');
 
@@ -182,12 +182,13 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
       _failoverTimer = Timer(
         const Duration(seconds: kVpnFailoverSeconds),
         () {
-          debugPrint('=== TUCUVPN: Failover timer fired for ${server.name} $configNum/$total');
+          debugPrint(
+              '=== TUCUVPN: Failover timer fired for ${server.name} $configNum/$total');
           if (_isConnecting) _tryNextConfig();
         },
       );
     } catch (e) {
-      debugPrint('=== TUCUVPN: Error loading config: $e');
+      debugPrint('=== TUCUVPN: Error loading/starting config: $e');
       ref.read(logProvider.notifier).add('› Error cargando config: $e');
       _tryNextConfig();
     }
@@ -197,9 +198,9 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
   /// Falls through to _tryNextCountry() when all files are exhausted.
   Future<void> _tryNextConfig() async {
     _failoverTimer?.cancel();
-    _vpn.disconnect();
+    await _vpnChannel.invokeMethod<void>('disconnect');
 
-    final server = ref.read(serversProvider)[_attemptIndex];
+    final server  = ref.read(serversProvider)[_attemptIndex];
     final nextNum = _configIndex + 2; // 1-based next index
     _configIndex++;
 
@@ -219,12 +220,12 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
   /// Mark the current country failed and move to the next one.
   Future<void> _tryNextCountry() async {
     _failoverTimer?.cancel();
-    _vpn.disconnect();
+    await _vpnChannel.invokeMethod<void>('disconnect');
 
     ref.read(serversProvider.notifier).setStatus(_attemptIndex, ServerStatus.failed);
 
     final failedName = kServers[_attemptIndex].name;
-    _configIndex = 0;
+    _configIndex  = 0;
     _attemptIndex = (_attemptIndex + 1) % kServers.length;
 
     if (_attemptIndex == _startIndex) {
@@ -249,10 +250,12 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
     );
   }
 
-  // ─── OpenVPN callbacks ────────────────────────────────────────────────────
+  // ─── ics-openvpn stage callbacks ──────────────────────────────────────────
 
-  Future<void> _onStageChange(VPNStage? stage, String? rawStage) async {
-    if (stage == VPNStage.connected) {
+  Future<void> _onRawStage(String stage) async {
+    debugPrint('=== TUCUVPN: stage=$stage  connecting=$_isConnecting');
+
+    if (_isConnected(stage)) {
       _failoverTimer?.cancel();
       _isConnecting = false;
 
@@ -272,32 +275,30 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
       final timerSeconds = await ref.read(settingsProvider.future);
       await Future.delayed(const Duration(seconds: 4));
       await ToastService.show('⏱️ Timer iniciado — $timerSeconds segundos');
-    } else if (stage == VPNStage.error && _isConnecting) {
-      debugPrint('=== TUCUVPN: VPN error stage — raw: $rawStage');
+    } else if (_isError(stage) && _isConnecting) {
+      debugPrint('=== TUCUVPN: VPN error stage — raw: $stage');
       ref.read(logProvider.notifier)
-          .add('✗ Error: ${rawStage ?? "error"} — cambiando servidor...');
+          .add('✗ Error: $stage — cambiando servidor...');
       _failoverTimer?.cancel();
       _tryNextConfig();
-    } else if (stage == VPNStage.disconnected && _isConnecting) {
+    } else if (_isDisconnected(stage) && _isConnecting) {
       // Disconnected unexpectedly while still trying to connect.
-      debugPrint('=== TUCUVPN: Unexpected disconnect while connecting — raw: $rawStage');
+      debugPrint('=== TUCUVPN: Unexpected disconnect while connecting — $stage');
       ref.read(logProvider.notifier)
-          .add('✗ Desconectado inesperado (${rawStage ?? "?"})');
-    } else if (stage == VPNStage.disconnected && !_isConnecting) {
+          .add('✗ Desconectado inesperado ($stage)');
+    } else if (_isDisconnected(stage) && !_isConnecting) {
       ref.read(serversProvider.notifier).setAllIdle();
       state = state.copyWith(
         connectionState: VpnConnectionState.idle,
         statusMessage: 'Desconectado',
         clearActive: true,
       );
-    } else if (stage != null && stage != VPNStage.connected) {
-      // Log all intermediate stages (authenticating, wait_connection, etc.)
-      debugPrint('=== TUCUVPN: Stage — $stage / raw: $rawStage');
-      ref.read(logProvider.notifier).add('  $rawStage');
+    } else {
+      // Intermediate stages: connecting, auth, wait_connection, assign_ip, etc.
+      debugPrint('=== TUCUVPN: intermediate stage=$stage');
+      ref.read(logProvider.notifier).add('  $stage');
     }
   }
-
-  void _onStatusChange(VpnStatus? status) {}
 
   /// Called by the UI after it has displayed the snackbar.
   void clearLaunchError() {
@@ -306,12 +307,8 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
 
   // ─── Launch external app ───────────────────────────────────────────────────
 
-  // Channel must match the constant defined in MainActivity.kt
   static const _launcherChannel = MethodChannel('com.tucuvpn.tucuvpn/launcher');
 
-  /// Uses PackageManager on the native side to find the real launcher Activity
-  /// (CATEGORY_LAUNCHER then CATEGORY_LEANBACK_LAUNCHER as fallback) and
-  /// starts it with FLAG_ACTIVITY_NEW_TASK — the same way a TV launcher opens apps.
   Future<void> _launchTargetApp() async {
     try {
       final success = await _launcherChannel.invokeMethod<bool>(
@@ -321,7 +318,8 @@ class VpnNotifier extends Notifier<VpnState> with WidgetsBindingObserver {
 
       if (success != true) {
         debugPrint('launchApp returned false — app not found: $kTargetAppPackage');
-        state = state.copyWith(launchError: 'App destino no encontrada: $kTargetAppPackage');
+        state = state.copyWith(
+            launchError: 'App destino no encontrada: $kTargetAppPackage');
       }
     } catch (e) {
       debugPrint('launchApp channel error: $e');

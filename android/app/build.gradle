@@ -44,3 +44,8 @@ android {
 flutter {
     source "../.."
 }
+
+dependencies {
+    // ics-openvpn (nizwar fork) — provides de.blinkt.openvpn.VPNHelper + native libs
+    implementation 'com.github.nizwar:openvpn_library:b3941ef040'
+}

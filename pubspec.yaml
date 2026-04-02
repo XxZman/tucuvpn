@@ -9,8 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  openvpn_flutter: ^1.3.4
-  android_intent_plus: ^5.0.0
+android_intent_plus: ^5.0.0
   shared_preferences: ^2.3.2
   flutter_riverpod: ^2.5.1
   google_fonts: ^6.2.1
