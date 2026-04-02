@@ -4,6 +4,7 @@ import android.app.Activity
 import android.net.VpnService
 import de.blinkt.openvpn.OnVPNStatusChangeListener
 import de.blinkt.openvpn.VPNHelper
+import de.blinkt.openvpn.core.OpenVPNService
 import io.flutter.plugin.common.EventChannel
 
 /**
@@ -36,6 +37,12 @@ class VpnHelper(private val activity: Activity) {
     var eventSink: EventChannel.EventSink? = null
 
     init {
+        // Mirror what openvpn_flutter's "initialize" case does: set default VPN
+        // status so OpenVPNService static state is ready before startVPN() is called.
+        if (OpenVPNService.getStatus() == null) {
+            OpenVPNService.setDefaultStatus()
+        }
+
         helper.setOnVPNStatusChangeListener(object : OnVPNStatusChangeListener {
             override fun onVPNStatusChanged(status: String) {
                 activity.runOnUiThread {
@@ -112,8 +119,9 @@ class VpnHelper(private val activity: Activity) {
         }
 
         try {
-            // VPN Gate / SoftEther servers use username "vpn" / password "vpn".
-            helper.startVPN(config, "vpn", "vpn", name, null)
+            // Pass an empty ArrayList — NOT null — because the library iterates
+            // bypassPackages with .size() and crashes on a null reference.
+            helper.startVPN(config, "vpn", "vpn", name, arrayListOf())
         } catch (e: Exception) {
             val msg = "error:${e.javaClass.simpleName}: ${e.message}"
             android.util.Log.e("VpnHelper", "startVPN threw: $msg", e)
