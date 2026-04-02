@@ -8,6 +8,7 @@ import 'package:openvpn_flutter/openvpn_flutter.dart';
 
 import '../constants.dart';
 import '../models/vpn_server.dart';
+import 'log_provider.dart';
 import 'servers_provider.dart';
 import 'settings_provider.dart';
 
@@ -81,6 +82,7 @@ class VpnNotifier extends Notifier<VpnState> {
     _startIndex = serverIndex;
     _attemptIndex = serverIndex;
     _configIndex = 0;
+    ref.read(logProvider.notifier).add('› Lanzando VPN...');
     await _tryCurrentConfig();
   }
 
@@ -107,6 +109,7 @@ class VpnNotifier extends Notifier<VpnState> {
     // Country has no config files — skip straight to next country.
     if (configs.isEmpty) {
       debugPrint('=== TUCUVPN: No configs for ${server.name}, skipping country');
+      ref.read(logProvider.notifier).add('› ${server.name}: sin configs, saltando...');
       await _tryNextCountry();
       return;
     }
@@ -130,6 +133,9 @@ class VpnNotifier extends Notifier<VpnState> {
       clearActive: true,
     );
 
+    ref.read(logProvider.notifier)
+        .add('› Contactando ${server.configPrefix}_$configNum ($configNum/$total)');
+
     try {
       debugPrint('=== TUCUVPN: Trying ${server.name} $configNum/$total');
       debugPrint('=== TUCUVPN: Config path: $configPath');
@@ -139,6 +145,7 @@ class VpnNotifier extends Notifier<VpnState> {
       debugPrint('=== TUCUVPN: Config loaded, length: ${config.length}');
       debugPrint('=== TUCUVPN: Calling _vpn.connect()');
 
+      ref.read(logProvider.notifier).add('› Autenticando...');
       _vpn.connect(config, server.name, certIsRequired: false);
 
       debugPrint('=== TUCUVPN: connect() called successfully');
@@ -153,6 +160,7 @@ class VpnNotifier extends Notifier<VpnState> {
       );
     } catch (e) {
       debugPrint('=== TUCUVPN: Error loading config: $e');
+      ref.read(logProvider.notifier).add('› Error cargando config: $e');
       _tryNextConfig();
     }
   }
@@ -162,13 +170,20 @@ class VpnNotifier extends Notifier<VpnState> {
   Future<void> _tryNextConfig() async {
     _failoverTimer?.cancel();
     _vpn.disconnect();
+
+    final server = ref.read(serversProvider)[_attemptIndex];
+    final nextNum = _configIndex + 2; // 1-based next index
     _configIndex++;
 
-    final configs = ref.read(serversProvider)[_attemptIndex].configPaths;
+    final configs = server.configPaths;
     if (_configIndex < configs.length) {
+      ref.read(logProvider.notifier)
+          .add('› Fallo, probando ${server.configPrefix}_$nextNum...');
       await Future.delayed(const Duration(milliseconds: 400));
       await _tryCurrentConfig();
     } else {
+      ref.read(logProvider.notifier)
+          .add('› ${server.name}: todos los configs fallaron');
       await _tryNextCountry();
     }
   }
@@ -180,6 +195,7 @@ class VpnNotifier extends Notifier<VpnState> {
 
     ref.read(serversProvider.notifier).setStatus(_attemptIndex, ServerStatus.failed);
 
+    final failedName = kServers[_attemptIndex].name;
     _configIndex = 0;
     _attemptIndex = (_attemptIndex + 1) % kServers.length;
 
@@ -188,6 +204,8 @@ class VpnNotifier extends Notifier<VpnState> {
       return;
     }
 
+    ref.read(logProvider.notifier)
+        .add('› $failedName fallido, cambiando país...');
     await Future.delayed(const Duration(milliseconds: 400));
     await _tryCurrentConfig();
   }
@@ -195,6 +213,7 @@ class VpnNotifier extends Notifier<VpnState> {
   void _handleAllFailed({String reason = 'Todos los servidores fallaron'}) {
     _isConnecting = false;
     ref.read(serversProvider.notifier).setAllIdle();
+    ref.read(logProvider.notifier).add('✗ Todos los servidores fallaron');
     state = state.copyWith(
       connectionState: VpnConnectionState.failed,
       statusMessage: reason,
@@ -218,6 +237,8 @@ class VpnNotifier extends Notifier<VpnState> {
         activeServerIndex: _attemptIndex,
       );
 
+      ref.read(logProvider.notifier)
+          .add('✓ Conectado: ${kServers[_attemptIndex].name}');
       await _launchTargetApp();
       Fluttertoast.showToast(
         msg: '✅ VPN Conectada',

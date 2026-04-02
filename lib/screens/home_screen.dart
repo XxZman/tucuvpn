@@ -38,21 +38,24 @@ class HomeScreen extends ConsumerWidget {
       }
     });
 
-    return Scaffold(
-      backgroundColor: kBg,
-      body: CyberpunkBackground(
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
-            child: Column(
-              children: [
-                _TopBar(context),
-                const SizedBox(height: 10),
-                const UpdateBanner(),
-                const Expanded(
-                  child: _MainLayout(),
-                ),
-              ],
+    return PopScope(
+      canPop: false, // back button never exits — use HOME to minimise on TV
+      child: Scaffold(
+        backgroundColor: kBg,
+        body: CyberpunkBackground(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(32, 24, 32, 0),
+              child: Column(
+                children: [
+                  _TopBar(context),
+                  const SizedBox(height: 10),
+                  const UpdateBanner(),
+                  const Expanded(
+                    child: _MainLayout(),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
