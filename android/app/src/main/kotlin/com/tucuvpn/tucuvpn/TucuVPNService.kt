@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.net.VpnService
 import android.os.Binder
@@ -43,16 +44,14 @@ class TucuVPNService : VpnService() {
         super.onCreate()
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
-        
         logNativeDebug()
-        loadNativeLibs()
-        
         Log.d(TAG, "TucuVPNService created")
     }
 
     private fun logNativeDebug() {
         Log.d(TAG, "=== NATIVE DEBUG ===")
         Log.d(TAG, "nativeLibraryDir: ${applicationInfo.nativeLibraryDir}")
+        Log.d(TAG, "filesDir: ${filesDir.absolutePath}")
         Log.d(TAG, "SUPPORTED_ABIS: ${Build.SUPPORTED_ABIS.joinToString()}")
         Log.d(TAG, "SDK_INT: ${Build.VERSION.SDK_INT}")
         
@@ -61,23 +60,6 @@ class TucuVPNService : VpnService() {
             nativeDir.listFiles()?.forEach { file ->
                 Log.d(TAG, "Found: ${file.name} (${file.length()} bytes)")
             }
-        }
-    }
-
-    private fun loadNativeLibs() {
-        Log.d(TAG, "=== Loading Native Libs ===")
-        try {
-            System.loadLibrary("ovpnexec")
-            Log.d(TAG, "Successfully loaded libovpnexec.so")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to load libovpnexec.so: ${e.message}")
-        }
-        
-        try {
-            System.loadLibrary("openvpn")
-            Log.d(TAG, "Successfully loaded libopenvpn.so")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to load libopenvpn.so: ${e.message}")
         }
     }
 
@@ -137,24 +119,7 @@ class TucuVPNService : VpnService() {
             
             VpnStatus.addStateListener(stateListener)
 
-            Log.d(TAG, "=== Starting OpenVPN ===")
-            Log.d(TAG, "Using VPNLaunchHelper approach...")
-            
-            // Use VPNLaunchHelper.buildOpenvpnArgv to get the command
-            try {
-                val argv = VPNLaunchHelperWrapper.buildOpenvpnArgv(this)
-                if (argv != null) {
-                    Log.d(TAG, "OpenVPN argv: ${argv.joinToString(" ")}")
-                    startOpenVPNProcess(argv)
-                } else {
-                    Log.e(TAG, "buildOpenvpnArgv returned null")
-                    VpnStatus.logError("Failed to build OpenVPN arguments")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error using VPNLaunchHelper: ${e.message}", e)
-                // Fallback: try direct approach
-                tryDirectOpenVPN()
-            }
+            startOpenVPNProcess()
 
         } catch (e: Exception) {
             Log.e(TAG, "Error connecting: ${e.message}", e)
@@ -163,43 +128,59 @@ class TucuVPNService : VpnService() {
         }
     }
 
-    private fun tryDirectOpenVPN() {
-        Log.d(TAG, "=== Direct OpenVPN Start ===")
+    private fun writeOpenVPNConfig(config: String) {
+        val configFile = File(filesDir, "android.conf")
+        configFile.parentFile?.mkdirs()
         
+        val builder = StringBuilder(config)
+        
+        if (!config.contains("dev tun")) {
+            builder.append("\ndev tun\n")
+        }
+        if (!config.contains("persist-tun")) {
+            builder.append("persist-tun\n")
+        }
+        if (!config.contains("persist-key")) {
+            builder.append("persist-key\n")
+        }
+        
+        configFile.writeText(builder.toString())
+        Log.d(TAG, "Wrote config to ${configFile.absolutePath}")
+    }
+
+    private fun startOpenVPNProcess() {
+        Log.d(TAG, "=== Starting OpenVPN ===")
+        
+        val abi = getPreferredAbi()
         val nativeLibDir = applicationInfo.nativeLibraryDir
+        
         if (nativeLibDir == null) {
             Log.e(TAG, "nativeLibraryDir is null!")
+            VpnStatus.logError("Native library directory not found")
             return
         }
         
-        val libovpnexec = File(nativeLibDir, "libovpnexec.so")
-        Log.d(TAG, "libovpnexec path: ${libovpnexec.absolutePath}")
-        Log.d(TAG, "libovpnexec exists: ${libovpnexec.exists()}")
-        Log.d(TAG, "libovpnexec size: ${libovpnexec.length()} bytes")
+        Log.d(TAG, "Using ABI: $abi")
+        Log.d(TAG, "Native lib dir: $nativeLibDir")
         
-        // Try to load and call native functions
-        try {
-            // These would be native methods if they exist
-            // For now, just log that we're trying
-            Log.d(TAG, "Would call native openvpn_main if available")
-        } catch (e: Exception) {
-            Log.e(TAG, "Direct approach failed: ${e.message}")
+        val binaryPath = getOpenVPNBinary(abi)
+        if (binaryPath == null) {
+            Log.e(TAG, "Failed to get OpenVPN binary path")
+            VpnStatus.logError("Failed to get OpenVPN binary")
+            return
         }
-    }
-
-    private fun startOpenVPNProcess(argv: Array<String>) {
-        Log.d(TAG, "=== Starting OpenVPN Process ===")
-        Log.d(TAG, "Args: ${argv.joinToString(" ")}")
+        
+        Log.d(TAG, "OpenVPN binary: $binaryPath")
+        
+        val configPath = File(filesDir, "android.conf").absolutePath
+        Log.d(TAG, "Config path: $configPath")
         
         try {
-            val processBuilder = ProcessBuilder(*argv)
-            processBuilder.directory(File(filesDir, "openvpn"))
+            val pb = ProcessBuilder(binaryPath, "--config", configPath)
+            pb.environment()["LD_LIBRARY_PATH"] = nativeLibDir
             
-            val env = processBuilder.environment()
-            env["LD_LIBRARY_PATH"] = "${applicationInfo.nativeLibraryDir}"
-            
-            Log.d(TAG, "Starting process...")
-            val process = processBuilder.start()
+            Log.d(TAG, "Starting OpenVPN process...")
+            val process = pb.start()
             
             Thread({
                 try {
@@ -218,6 +199,7 @@ class TucuVPNService : VpnService() {
                     var line: String?
                     while (reader.readLine().also { line = it } != null) {
                         Log.e(TAG, "[ovpn-err] $line")
+                        VpnStatus.logError(line!!)
                     }
                 } catch (e: Exception) {}
             }, "OVPN-stderr").start()
@@ -229,32 +211,77 @@ class TucuVPNService : VpnService() {
                     de.blinkt.openvpn.core.ConnectionStatus.LEVEL_NOTCONNECTED, null)
             }, "OVPN-waiter").start()
             
-            Log.d(TAG, "OpenVPN process started")
+            Log.d(TAG, "OpenVPN process started successfully")
             
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start OpenVPN: ${e.message}", e)
-            VpnStatus.logError("Failed to start: ${e.message}")
+            VpnStatus.logError("Failed to start OpenVPN: ${e.message}")
         }
     }
 
-    private fun writeOpenVPNConfig(config: String) {
-        val configFile = File(filesDir, "openvpn/android.conf")
-        configFile.parentFile?.mkdirs()
+    private fun getPreferredAbi(): String {
+        val supportedAbis = Build.SUPPORTED_ABIS.toList()
+        val abiOrder = listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
         
-        val builder = StringBuilder(config)
-        
-        if (!config.contains("dev tun")) {
-            builder.append("\ndev tun\n")
-        }
-        if (!config.contains("persist-tun")) {
-            builder.append("persist-tun\n")
-        }
-        if (!config.contains("persist-key")) {
-            builder.append("persist-key\n")
+        for (preferred in abiOrder) {
+            for (abi in supportedAbis) {
+                if (abi.contains(preferred)) {
+                    return preferred
+                }
+            }
         }
         
-        configFile.writeText(builder.toString())
-        Log.d(TAG, "Wrote config to ${configFile.absolutePath}")
+        return supportedAbis.firstOrNull() ?: "armeabi-v7a"
+    }
+
+    private fun getOpenVPNBinary(abi: String): String? {
+        val nativeLibDir = File(applicationInfo.nativeLibraryDir ?: "")
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val libovpnexec = File(nativeLibDir, "libovpnexec.so")
+            if (libovpnexec.exists() && libovpnexec.length() > 10000) {
+                Log.d(TAG, "Using libovpnexec.so as executable")
+                return libovpnexec.absolutePath
+            }
+        }
+        
+        val assetName = "pie_openvpn.$abi"
+        val binaryFile = File(filesDir, "openvpn_$abi")
+        binaryFile.parentFile?.mkdirs()
+        
+        if (binaryFile.exists()) {
+            Log.d(TAG, "Using cached binary: ${binaryFile.absolutePath}")
+            return binaryFile.absolutePath
+        }
+        
+        try {
+            assets.open(assetName).use { input ->
+                FileOutputStream(binaryFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            binaryFile.setExecutable(true, false)
+            Log.d(TAG, "Copied binary from assets: $assetName")
+            return binaryFile.absolutePath
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to copy binary from assets: ${e.message}")
+            
+            for (fallbackAbi in listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")) {
+                try {
+                    val fallbackName = "pie_openvpn.$fallbackAbi"
+                    assets.open(fallbackName).use { input ->
+                        FileOutputStream(binaryFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    binaryFile.setExecutable(true, false)
+                    Log.d(TAG, "Copied fallback binary: $fallbackName")
+                    return binaryFile.absolutePath
+                } catch (_: Exception) {}
+            }
+        }
+        
+        return null
     }
 
     fun disconnect() {
@@ -339,23 +366,5 @@ class TucuVPNService : VpnService() {
 
     private fun updateNotification(status: String) {
         notificationManager?.notify(NOTIFICATION_ID, createNotification(status))
-    }
-}
-
-object VPNLaunchHelperWrapper {
-    private const val TAG = "VPNLaunchHelper"
-    
-    fun buildOpenvpnArgv(context: android.content.Context): Array<String>? {
-        try {
-            // Get the method via reflection since we can't import it directly
-            val clazz = Class.forName("de.blinkt.openvpn.core.VPNLaunchHelper")
-            val method = clazz.getMethod("buildOpenvpnArgv", android.content.Context::class.java)
-            @Suppress("UNCHECKED_CAST")
-            val result = method.invoke(null, context) as? Array<String>
-            return result
-        } catch (e: Exception) {
-            Log.e(TAG, "buildOpenvpnArgv failed: ${e.message}")
-            return null
-        }
     }
 }
