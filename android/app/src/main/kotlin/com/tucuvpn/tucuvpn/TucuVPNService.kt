@@ -13,13 +13,10 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import de.blinkt.openvpn.VpnProfile
 import de.blinkt.openvpn.core.ConfigParser
-import de.blinkt.openvpn.core.NativeUtils
 import de.blinkt.openvpn.core.ProfileManager
 import de.blinkt.openvpn.core.VPNLaunchHelper
 import de.blinkt.openvpn.core.VpnStatus
 import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
 import java.io.StringReader
 
 class TucuVPNService : VpnService() {
@@ -55,7 +52,6 @@ class TucuVPNService : VpnService() {
     private fun logNativeDebug() {
         Log.d(TAG, "=== NATIVE DEBUG ===")
         Log.d(TAG, "nativeLibraryDir: ${applicationInfo.nativeLibraryDir}")
-        Log.d(TAG, "nativeLibraryRootDir: ${applicationInfo.nativeLibraryRootDir}")
         Log.d(TAG, "SUPPORTED_ABIS: ${Build.SUPPORTED_ABIS.joinToString()}")
         Log.d(TAG, "CPU_ABI: ${Build.CPU_ABI}")
         Log.d(TAG, "SDK_INT: ${Build.VERSION.SDK_INT}")
