@@ -120,14 +120,34 @@ class TucuVPNService : VpnService() {
 
             writeOpenVPNConfig(cleanConfig)
             
-            Log.d(TAG, "Starting OpenVPN via VPNLaunchHelper")
+            Log.d(TAG, "=== Starting OpenVPN ===")
+            Log.d(TAG, "Profile UUID: ${profile.uuid}")
+            Log.d(TAG, "Profile name: ${profile.mName}")
             
+            // Check what prepareStartService returns
+            val startIntent = profile.prepareStartService(this)
+            Log.d(TAG, "prepareStartService returned: $startIntent")
+            
+            if (startIntent != null) {
+                Log.d(TAG, "Starting VPN service via intent...")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(startIntent)
+                } else {
+                    startService(startIntent)
+                }
+            } else {
+                Log.w(TAG, "prepareStartService returned null!")
+            }
+            
+            Log.d(TAG, "Calling VPNLaunchHelper.startOpenVpn")
             VPNLaunchHelper.startOpenVpn(profile, this)
+            Log.d(TAG, "VPNLaunchHelper.startOpenVpn returned")
 
             VpnStatus.addStateListener(stateListener)
 
         } catch (e: Exception) {
             Log.e(TAG, "Error connecting: ${e.message}", e)
+            e.printStackTrace()
             VpnStatus.logError("Error: ${e.message}")
             stopSelf()
         }
@@ -169,29 +189,29 @@ class TucuVPNService : VpnService() {
             level: de.blinkt.openvpn.core.ConnectionStatus?,
             intent: Intent?
         ) {
-            Log.d(TAG, "State: $state, Level: $level, Message: $logmessage")
+            Log.d(TAG, ">>> State update: state=$state level=$level msg=$logmessage intent=$intent")
             
-            val statusText = when (state) {
-                "CONNECTED" -> "Conectado"
-                "DISCONNECTED", "EXITING" -> "Desconectado"
-                "NEGOTIATING" -> "Negociando..."
-                "AUTH" -> "Autenticando..."
-                "WAIT" -> "Esperando servidor..."
-                "RECONNECTING" -> "Reconectando..."
-                "GET_CONFIG" -> "Obteniendo config..."
-                "ASSIGN_IP" -> "Asignando IP..."
-                "ADD_ROUTES" -> "Configurando rutas..."
-                "CONNECTING" -> "Conectando..."
-                "NOPROCESS" -> "Sin proceso"
-                "VPN_GENERATE_CONFIG" -> "Generando config..."
-                "VPN_START" -> "Iniciando VPN..."
-                else -> state ?: "Desconocido"
+            val statusText = when {
+                level == de.blinkt.openvpn.core.ConnectionStatus.LEVEL_CONNECTED -> "Conectado"
+                level == de.blinkt.openvpn.core.ConnectionStatus.LEVEL_NOTCONNECTED -> "Desconectado"
+                level == de.blinkt.openvpn.core.ConnectionStatus.LEVEL_AUTH_FAILED -> "Auth fallida"
+                level == de.blinkt.openvpn.core.ConnectionStatus.LEVEL_NONETWORK -> "Sin red"
+                state == "CONNECTED" -> "Conectado"
+                state == "DISCONNECTED" || state == "EXITING" -> "Desconectado"
+                state == "NOPROCESS" -> "Sin proceso"
+                state == "VPN_GENERATE_CONFIG" -> "Generando config..."
+                state == "VPN_START" -> "Iniciando VPN..."
+                state != null -> state
+                else -> logmessage ?: "Desconocido"
             }
             
+            Log.d(TAG, "Status text: $statusText")
             updateNotification(statusText)
         }
 
-        override fun setConnectedVPN(uuid: String?) {}
+        override fun setConnectedVPN(uuid: String?) {
+            Log.d(TAG, "setConnectedVPN: $uuid")
+        }
     }
 
     private fun createNotificationChannel() {
