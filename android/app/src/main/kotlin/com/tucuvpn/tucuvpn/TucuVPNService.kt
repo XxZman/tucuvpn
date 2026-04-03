@@ -96,6 +96,9 @@ class TucuVPNService : VpnService() {
             val profile: VpnProfile = cp.convertProfile()
             profile.mName = name
             
+            Log.d(TAG, "VpnProfile created, authentication type: ${profile.mAuthenticationType}")
+            Log.d(TAG, "Server: ${profile.mServerName}:${profile.mServerPort}")
+            
             currentProfile = profile
             
             val pm = ProfileManager.getInstance(this)
@@ -107,6 +110,8 @@ class TucuVPNService : VpnService() {
             VpnStatus.addStateListener(stateListener)
 
             Log.d(TAG, "Profile saved with UUID: ${profile.getUUIDString()}")
+            Log.d(TAG, "Profile UUID string: ${profile.getUUIDString()}")
+            Log.d(TAG, "Profile version: ${profile.mVersion}")
             
             // Bind to OpenVPNService to receive state updates
             val vpnIntent = Intent(this, de.blinkt.openvpn.core.OpenVPNService::class.java)
