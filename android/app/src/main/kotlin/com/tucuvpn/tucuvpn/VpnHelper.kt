@@ -8,6 +8,7 @@ import de.blinkt.openvpn.core.ConfigParser
 import de.blinkt.openvpn.core.OpenVPNService
 import de.blinkt.openvpn.core.ProfileManager
 import de.blinkt.openvpn.core.VPNLaunchHelper
+import de.blinkt.openvpn.core.ConnectionStatus
 import de.blinkt.openvpn.core.VpnStatus
 import io.flutter.plugin.common.EventChannel
 import java.io.StringReader
@@ -39,25 +40,27 @@ class VpnHelper(private val activity: Activity) {
     private var pendingName: String? = null
 
     // ics-openvpn state listener — registered in init, removed in cleanup().
+    // Nullable params match the Java interface exactly as shipped in the AAR.
     private val stateListener = object : VpnStatus.StateListener {
         override fun updateState(
-            state: String,
-            logmessage: String,
+            state: String?,
+            logmessage: String?,
             localizedResId: Int,
-            level: VpnStatus.ConnectionStatus,
+            level: ConnectionStatus?,
             intent: Intent?,
         ) {
-            val mapped = when (state) {
-                "CONNECTED"               -> "connected"
-                "DISCONNECTED", "EXITING" -> "disconnected"
-                "AUTH_FAILED"             -> "auth_failed"
-                "NONETWORK"               -> "nonetwork"
-                else                      -> "connecting"
+            val mapped = when {
+                level == ConnectionStatus.LEVEL_CONNECTED    -> "connected"
+                level == ConnectionStatus.LEVEL_NOTCONNECTED -> "disconnected"
+                level == ConnectionStatus.LEVEL_AUTH_FAILED  -> "auth_failed"
+                level == ConnectionStatus.LEVEL_NONETWORK    -> "nonetwork"
+                state == "RECONNECTING"                      -> "connecting"
+                else                                         -> state?.lowercase() ?: "connecting"
             }
             activity.runOnUiThread { eventSink?.success(mapped) }
         }
 
-        override fun setConnectedVPN(uuid: String) { /* no-op */ }
+        override fun setConnectedVPN(uuid: String?) { /* no-op */ }
     }
 
     init {
