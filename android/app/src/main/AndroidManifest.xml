@@ -125,7 +125,8 @@
             android:excludeFromRecents="true"
             android:label="Launch VPN"
             android:taskAffinity=".LaunchVPN"
-            android:theme="@style/Theme.AppCompat.Dialog">
+            android:theme="@style/Theme.AppCompat.Dialog"
+            tools:replace="android:label,android:theme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.DEFAULT"/>
