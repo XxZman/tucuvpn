@@ -1,25 +1,30 @@
 package com.tucuvpn.tucuvpn
 
 import android.app.Activity
+import android.content.Intent
 import android.net.VpnService
-import de.blinkt.openvpn.OnVPNStatusChangeListener
-import de.blinkt.openvpn.VPNHelper
+import de.blinkt.openvpn.VpnProfile
+import de.blinkt.openvpn.core.ConfigParser
 import de.blinkt.openvpn.core.OpenVPNService
+import de.blinkt.openvpn.core.ProfileManager
+import de.blinkt.openvpn.core.VPNLaunchHelper
+import de.blinkt.openvpn.core.VpnStatus
 import io.flutter.plugin.common.EventChannel
+import java.io.StringReader
 
 /**
- * Thin wrapper around nizwar's VPNHelper that bridges ics-openvpn to Flutter.
+ * Direct ics-openvpn integration (de.blinkt.openvpn.core.*).
  *
- * Call [connect] to start a VPN session. If the system VPN permission dialog
- * needs to be shown, [connect] fires startActivityForResult(VPN_REQUEST_CODE)
- * and returns; call [onPermissionResult] from MainActivity.onActivityResult
- * to resume. Stage updates are emitted on [eventSink] as lowercase strings
- * (e.g. "connected", "connecting", "disconnected", "auth_failed", "error").
- *
- * All risky calls are wrapped in try/catch so exceptions are surfaced as
- * "error" stage events to Dart rather than crashes or silent no-ops. This
- * ensures the Dart failover timer (not the immediate catch path) handles
- * server-switching at the correct 20-second cadence.
+ * Lifecycle:
+ *   1. [connect] parses the .ovpn string, builds a VpnProfile, requests VPN
+ *      permission if needed, then calls [VPNLaunchHelper.startOpenVpn].
+ *   2. If the system shows the permission dialog, [onPermissionResult] resumes
+ *      the connect flow once the user responds.
+ *   3. Stage events from [VpnStatus.StateListener] are forwarded to Flutter via
+ *      [eventSink] as lowercase strings ("connected", "connecting", etc.).
+ *   4. [disconnect] sends the DISCONNECT_VPN action to [OpenVPNService] and
+ *      emits "disconnected" immediately so the Dart failover timer can reset.
+ *   5. Call [cleanup] from onDestroy to remove the state listener.
  */
 class VpnHelper(private val activity: Activity) {
 
@@ -27,76 +32,67 @@ class VpnHelper(private val activity: Activity) {
         const val VPN_REQUEST_CODE = 24
     }
 
-    private val helper = VPNHelper(activity)
+    /** Set by MainActivity when the EventChannel listener attaches. */
+    var eventSink: EventChannel.EventSink? = null
 
-    // Held while waiting for the user's VPN-permission dialog response.
     private var pendingConfig: String? = null
     private var pendingName: String? = null
 
-    /** Set by MainActivity when the EventChannel listener is attached. */
-    var eventSink: EventChannel.EventSink? = null
-
-    init {
-        // Mirror what openvpn_flutter's "initialize" case does: set default VPN
-        // status so OpenVPNService static state is ready before startVPN() is called.
-        if (OpenVPNService.getStatus() == null) {
-            OpenVPNService.setDefaultStatus()
+    // ics-openvpn state listener — registered in init, removed in cleanup().
+    private val stateListener = object : VpnStatus.StateListener {
+        override fun updateState(
+            state: String,
+            logmessage: String,
+            localizedResId: Int,
+            level: VpnStatus.ConnectionStatus,
+            intent: Intent?,
+        ) {
+            val mapped = when (state) {
+                "CONNECTED"               -> "connected"
+                "DISCONNECTED", "EXITING" -> "disconnected"
+                "AUTH_FAILED"             -> "auth_failed"
+                "NONETWORK"               -> "nonetwork"
+                else                      -> "connecting"
+            }
+            activity.runOnUiThread { eventSink?.success(mapped) }
         }
 
-        helper.setOnVPNStatusChangeListener(object : OnVPNStatusChangeListener {
-            override fun onVPNStatusChanged(status: String) {
-                activity.runOnUiThread {
-                    eventSink?.success(status.lowercase())
-                }
-            }
-
-            override fun onConnectionStatusChanged(
-                duration: String,
-                lastPacketReceive: String,
-                byteIn: String,
-                byteOut: String,
-            ) { /* byte-count updates — not needed by TucuVPN */ }
-        })
+        override fun setConnectedVPN(uuid: String) { /* no-op */ }
     }
 
+    init {
+        VpnStatus.addStateListener(stateListener)
+    }
+
+    // ── Public API ────────────────────────────────────────────────────────────
+
     /**
-     * Starts the VPN. If the system needs to show the permission dialog first,
-     * the actual connect is deferred until [onPermissionResult] is called.
-     * Any exception is caught and emitted as an "error" stage event so Dart
-     * can failover via the normal EventChannel path (not via PlatformException).
+     * Starts the VPN. Shows the system permission dialog if needed.
+     * All errors are emitted as "error:..." strings so Dart's failover timer
+     * handles retry at the normal 20-second cadence.
      */
     fun connect(config: String, name: String) {
         try {
             val permissionIntent = VpnService.prepare(activity)
             if (permissionIntent != null) {
                 pendingConfig = config
-                pendingName = name
+                pendingName   = name
                 activity.startActivityForResult(permissionIntent, VPN_REQUEST_CODE)
             } else {
                 startVpn(config, name)
             }
         } catch (e: Exception) {
-            val msg = "error:${e.javaClass.simpleName}: ${e.message}"
-            android.util.Log.e("VpnHelper", "connect() threw: $msg", e)
-            activity.runOnUiThread { eventSink?.success(msg) }
+            emitError("connect", e)
         }
     }
 
-    /**
-     * Forward the result of the VPN-permission dialog from onActivityResult.
-     * Fully guarded: null pending state and startVpn exceptions both emit
-     * "error" so Dart is never left waiting with no stage update.
-     */
+    /** Called from MainActivity.onActivityResult after the VPN permission dialog. */
     fun onPermissionResult(granted: Boolean) {
         if (granted) {
-            val config = pendingConfig
-            val name   = pendingName
-            if (config != null && name != null) {
-                startVpn(config, name)
-            } else {
-                // Pending data lost between grant and resume — signal Dart to failover.
-                activity.runOnUiThread { eventSink?.success("error") }
-            }
+            val cfg  = pendingConfig
+            val name = pendingName
+            if (cfg != null && name != null) startVpn(cfg, name)
+            else activity.runOnUiThread { eventSink?.success("error:lost pending config") }
         } else {
             activity.runOnUiThread { eventSink?.success("denied") }
         }
@@ -104,49 +100,64 @@ class VpnHelper(private val activity: Activity) {
         pendingName   = null
     }
 
-    /**
-     * Calls nizwar's VPNHelper.startVPN(). Any exception (config parse error,
-     * service not found, etc.) is caught and emitted as "error" so the Dart
-     * failover timer — already armed at this point — fires at the normal
-     * 20-second interval instead of triggering an immediate PlatformException.
-     */
-    private fun startVpn(config: String, name: String) {
-        // Log the first 3 lines of the config so we can verify it arrives intact.
-        val preview = config.lines().take(3).joinToString(" | ")
-        android.util.Log.d("VpnHelper", "startVpn: name=$name config_preview=[$preview]")
-        activity.runOnUiThread {
-            eventSink?.success("log:config preview: $preview")
-        }
+    /** Stops any active VPN tunnel. */
+    fun disconnect() {
+        try {
+            ProfileManager.setConntectedVpnProfileDisconnected(activity)
+        } catch (_: Exception) {}
+        try {
+            val intent = Intent(activity, OpenVPNService::class.java)
+            intent.action = OpenVPNService.DISCONNECT_VPN
+            activity.startService(intent)
+        } catch (_: Exception) {}
+        activity.runOnUiThread { eventSink?.success("disconnected") }
+    }
 
-        // Strip comment and blank lines before handing to the parser.
-        // Some VPN Gate / SoftEther configs start with many ### lines that
-        // confuse the nizwar ConfigParser and cause a parse failure.
-        val cleanConfig = config.lines()
-            .filter { line ->
-                val trimmed = line.trim()
-                trimmed.isNotEmpty() && !trimmed.startsWith("#") && !trimmed.startsWith(";")
-            }
+    /** Remove the VpnStatus listener — call this from Activity.onDestroy. */
+    fun cleanup() {
+        VpnStatus.removeStateListener(stateListener)
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    private fun startVpn(config: String, name: String) {
+        // Strip comments and blank lines — some VPN Gate / SoftEther configs
+        // start with many ### header lines that confuse the parser.
+        val clean = config.lines()
+            .filter { line -> val t = line.trim(); t.isNotEmpty() && !t.startsWith("#") && !t.startsWith(";") }
             .joinToString("\n")
 
-        val cleanPreview = cleanConfig.lines().take(3).joinToString(" | ")
-        android.util.Log.d("VpnHelper", "startVpn clean_preview=[$cleanPreview]")
-        activity.runOnUiThread {
-            eventSink?.success("log:clean config: $cleanPreview")
-        }
+        android.util.Log.d("VpnHelper", "startVpn name=$name lines=${clean.lines().size}")
+        activity.runOnUiThread { eventSink?.success("log:parsing config ($name)") }
 
         try {
-            // Pass an empty ArrayList — NOT null — because the library iterates
-            // bypassPackages with .size() and crashes on a null reference.
-            helper.startVPN(cleanConfig, "vpn", "vpn", name, arrayListOf())
+            // 1. Parse the .ovpn config string.
+            val cp = ConfigParser()
+            cp.parseConfig(StringReader(clean))
+
+            // 2. Convert to a VpnProfile (ics-openvpn's internal model).
+            val profile: VpnProfile = cp.convertProfile()
+            profile.mName = name
+
+            // 3. Register the profile so ics-openvpn can look it up by UUID.
+            val pm = ProfileManager.getInstance(activity)
+            pm.addProfile(profile)
+            ProfileManager.setConnectedVPNProfile(profile.getUUIDString())
+
+            // 4. Hand off to VPNLaunchHelper — it requests tun, binds the service,
+            //    and starts the OpenVPN process.  replace_running_vpn=true ensures
+            //    any previous tunnel is torn down first.
+            VPNLaunchHelper.startOpenVpn(profile, activity.applicationContext, "connect", true)
+        } catch (e: ConfigParser.ConfigParseError) {
+            emitError("startVpn/parse", e)
         } catch (e: Exception) {
-            val msg = "error:${e.javaClass.simpleName}: ${e.message}"
-            android.util.Log.e("VpnHelper", "startVPN threw: $msg", e)
-            activity.runOnUiThread { eventSink?.success(msg) }
+            emitError("startVpn", e)
         }
     }
 
-    fun disconnect() {
-        try { helper.stopVPN() } catch (_: Exception) {}
-        activity.runOnUiThread { eventSink?.success("disconnected") }
+    private fun emitError(method: String, e: Exception) {
+        val msg = "error:${e.javaClass.simpleName}: ${e.message}"
+        android.util.Log.e("VpnHelper", "$method threw: $msg", e)
+        activity.runOnUiThread { eventSink?.success(msg) }
     }
 }

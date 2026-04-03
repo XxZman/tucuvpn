@@ -1,0 +1,56 @@
+// android/openvpn-bridge/build.gradle
+//
+// Compiles the ics-openvpn Java/AIDL sources from the git submodule at
+// android/ics-openvpn/ without triggering any NDK/CMake native build.
+// Native .so files (libopenvpn.so, libovpnexec.so, etc.) are pre-built and
+// live in android/app/src/main/jniLibs/ — AGP merges them automatically.
+
+plugins {
+    id 'com.android.library'
+}
+
+android {
+    namespace  'de.blinkt.openvpn'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk    21
+        targetSdk 34
+        // No externalNativeBuild block — .so files come from app/src/main/jniLibs/
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        main {
+            // Point directly at the ics-openvpn submodule sources.
+            // Paths are relative to this module's projectDir (android/openvpn-bridge/).
+            java.srcDirs   = ['../ics-openvpn/main/src/main/java']
+            aidl.srcDirs   = ['../ics-openvpn/main/src/main/aidl']
+            res.srcDirs    = ['../ics-openvpn/main/src/main/res']
+            assets.srcDirs = ['../ics-openvpn/main/src/main/assets']
+            // Use our minimal manifest — app's AndroidManifest already declares
+            // all de.blinkt.openvpn.* services with the correct attributes.
+            manifest.srcFile 'src/main/AndroidManifest.xml'
+        }
+    }
+
+    lint {
+        abortOnError false
+        disable 'ExpiredTargetSdkVersion',
+                'UnsafeOptInUsageError',
+                'MissingPermission',
+                'NewApi'
+    }
+}
+
+dependencies {
+    implementation 'androidx.annotation:annotation:1.8.2'
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
+    implementation 'androidx.preference:preference-ktx:1.2.1'
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+}

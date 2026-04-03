@@ -20,6 +20,11 @@ class MainActivity : FlutterActivity() {
 
     private lateinit var vpnHelper: VpnHelper
 
+    override fun onDestroy() {
+        super.onDestroy()
+        vpnHelper.cleanup()
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == VpnHelper.VPN_REQUEST_CODE) {
