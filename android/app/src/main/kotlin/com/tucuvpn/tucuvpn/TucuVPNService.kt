@@ -80,12 +80,14 @@ class TucuVPNService : VpnService() {
         
         try {
             val cleanConfig = config.lines()
+                .map { it.trim() }
                 .filter { line -> 
-                    val t = line.trim()
-                    t.isNotEmpty() && !t.startsWith("#") && !t.startsWith(";")
+                    line.isNotEmpty() && !line.startsWith("#") && !line.startsWith(";")
                 }
                 .joinToString("\n")
 
+            Log.d(TAG, "Config cleaned, length: ${cleanConfig.length}")
+            
             val cp = ConfigParser()
             cp.parseConfig(StringReader(cleanConfig))
 
