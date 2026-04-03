@@ -68,5 +68,5 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.nizwar:openvpn_library:0.0.1'
+    implementation 'com.github.nizwar:openvpn_library:b3941ef040'
 }
