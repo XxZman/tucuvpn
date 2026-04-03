@@ -10,6 +10,8 @@ import android.net.VpnService
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.content.ComponentName
+import android.content.ServiceConnection
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import de.blinkt.openvpn.VpnProfile
@@ -105,6 +107,17 @@ class TucuVPNService : VpnService() {
             VpnStatus.addStateListener(stateListener)
 
             Log.d(TAG, "Profile saved with UUID: ${profile.getUUIDString()}")
+            
+            // Bind to OpenVPNService to receive state updates
+            val vpnIntent = Intent(this, de.blinkt.openvpn.core.OpenVPNService::class.java)
+            bindService(vpnIntent, object : ServiceConnection {
+                override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                    Log.d(TAG, "OpenVPNService connected")
+                }
+                override fun onServiceDisconnected(name: ComponentName?) {
+                    Log.d(TAG, "OpenVPNService disconnected")
+                }
+            }, Context.BIND_AUTO_CREATE)
             
             val startIntent = profile.getStartServiceIntent(this)
             Log.d(TAG, "Starting OpenVPNService with profile intent...")

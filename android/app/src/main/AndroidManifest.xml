@@ -83,7 +83,6 @@
             android:exported="true"
             android:foregroundServiceType="specialUse"
             android:permission="android.permission.BIND_VPN_SERVICE"
-            android:process=":openvpn"
             tools:replace="android:exported">
             <intent-filter>
                 <action android:name="android.net.VpnService"/>
@@ -94,8 +93,7 @@
         <!-- External API service -->
         <service
             android:name="de.blinkt.openvpn.api.ExternalOpenVPNService"
-            android:exported="true"
-            android:process=":openvpn">
+            android:exported="true">
             <intent-filter>
                 <action android:name="de.blinkt.openvpn.api.IOpenVPNAPIService"/>
             </intent-filter>
@@ -104,15 +102,13 @@
         <!-- Status service -->
         <service
             android:name="de.blinkt.openvpn.core.OpenVPNStatusService"
-            android:exported="false"
-            android:process=":openvpn"/>
+            android:exported="false"/>
 
         <!-- Keep VPN alive service -->
         <service
             android:name="de.blinkt.openvpn.core.keepVPNAlive"
             android:exported="true"
-            android:permission="android.permission.BIND_JOB_SERVICE"
-            android:process=":openvpn"/>
+            android:permission="android.permission.BIND_JOB_SERVICE"/>
 
         <!-- Launch VPN activity -->
         <activity
