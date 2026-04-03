@@ -23,8 +23,3 @@ plugins {
 }
 
 include ":app"
-
-// ics-openvpn Java/Kotlin/AIDL sources compiled as a local library module.
-// Native .so files are already in app/src/main/jniLibs/ — no NDK build needed.
-include ":openvpn-bridge"
-project(":openvpn-bridge").projectDir = file("openvpn-bridge")

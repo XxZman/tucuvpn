@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
-    Minimal library manifest for the openvpn-bridge module.
-    All de.blinkt.openvpn.* services are declared in the app's AndroidManifest.xml.
--->
-<manifest />

@@ -142,12 +142,13 @@ class VpnHelper(private val activity: Activity) {
             // 3. Register the profile so ics-openvpn can look it up by UUID.
             val pm = ProfileManager.getInstance(activity)
             pm.addProfile(profile)
-            ProfileManager.setConnectedVPNProfile(profile.getUUIDString())
+            // v0.7.33: setConnectedVpnProfile(Context, VpnProfile) — note lowercase 'v'
+            ProfileManager.setConnectedVpnProfile(activity, profile)
 
             // 4. Hand off to VPNLaunchHelper — it requests tun, binds the service,
-            //    and starts the OpenVPN process.  replace_running_vpn=true ensures
-            //    any previous tunnel is torn down first.
-            VPNLaunchHelper.startOpenVpn(profile, activity.applicationContext, "connect", true)
+            //    and starts the OpenVPN process.
+            // v0.7.33: startOpenVpn(VpnProfile, Context) — 2-param signature
+            VPNLaunchHelper.startOpenVpn(profile, activity.applicationContext)
         } catch (e: ConfigParser.ConfigParseError) {
             emitError("startVpn/parse", e)
         } catch (e: Exception) {

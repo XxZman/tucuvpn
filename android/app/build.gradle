@@ -58,7 +58,7 @@ flutter {
 }
 
 dependencies {
-    // ics-openvpn compiled from source (android/ics-openvpn/ git submodule).
-    // Native .so files are in jniLibs/ and are merged into the APK from there.
-    implementation project(':openvpn-bridge')
+    // ics-openvpn pre-built AAR (schwabe/ics-openvpn v0.7.33 via JitPack).
+    // This is the upstream project by Arne Schwabe — not the broken nizwar fork.
+    implementation 'com.github.schwabe:ics-openvpn:v0.7.33'
 }

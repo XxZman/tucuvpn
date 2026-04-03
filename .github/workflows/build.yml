@@ -15,15 +15,6 @@ jobs:
       # ── Checkout ────────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
-        # Do NOT use submodules: true here — that triggers a recursive init
-        # which would pull OpenSSL/LZO (ics-openvpn nested submodules we don't need).
-
-      # ── ics-openvpn submodule (shallow, top-level only) ─────────────────────
-      - name: Init ics-openvpn submodule
-        # --depth 1  → only the latest commit (fast, ~15 MB instead of full history)
-        # android/ics-openvpn only — does NOT recurse into OpenSSL/LZO submodules
-        # because we skip the native CMake build and use pre-built .so files.
-        run: git submodule update --init --depth 1 android/ics-openvpn
 
       # ── Java ────────────────────────────────────────────────────────────────
       - name: Set up Java 17
