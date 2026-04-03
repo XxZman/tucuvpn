@@ -1,0 +1,54 @@
+// android/ics-openvpn-build.gradle
+//
+// This file is copied over android/ics-openvpn/main/build.gradle during CI
+// (see .github/workflows/build.yml).  It replaces the upstream build.gradle
+// so we can:
+//   • satisfy the AGP 8.x mandatory `namespace` declaration
+//   • skip the NDK/CMake native build  (pre-built .so files already live in
+//     android/app/src/main/jniLibs/ and are merged into the APK from there)
+//   • pin compile / Java options to match the host app
+//
+// Nothing else changes — all Java, Kotlin, AIDL, and resource sources inside
+// android/ics-openvpn/main/src/main/ are compiled normally.
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace  'de.blinkt.openvpn'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk    21
+        targetSdk 34
+        // No externalNativeBuild block — native .so files are provided via the
+        // app module's jniLibs/ directory and do not need to be compiled here.
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        main {
+            aidl.srcDirs = ['src/main/aidl']
+            java.srcDirs = ['src/main/java']
+            res.srcDirs  = ['src/main/res']
+        }
+    }
+
+    lint {
+        abortOnError false
+        disable 'ExpiredTargetSdkVersion',
+                'UnsafeOptInUsageError',
+                'MissingPermission'
+    }
+}
+
+dependencies {
+    implementation 'androidx.annotation:annotation:1.8.2'
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
+    implementation 'androidx.preference:preference-ktx:1.2.1'
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+}

@@ -66,14 +66,13 @@
             android:name="flutterEmbedding"
             android:value="2"/>
 
-        <!-- OpenVPN tunnel service (de.blinkt.openvpn / ics-openvpn) -->
+        <!-- Replace library's OpenVPNService with our own -->
         <service
-            android:name="de.blinkt.openvpn.core.OpenVPNService"
+            android:name="com.tucuvpn.tucuvpn.TucuVPNService"
             android:permission="android.permission.BIND_VPN_SERVICE"
             android:foregroundServiceType="specialUse"
             android:exported="true"
-            android:process=":openvpn"
-            tools:replace="android:exported">
+            tools:node="replace">
             <intent-filter>
                 <action android:name="android.net.VpnService"/>
             </intent-filter>
@@ -81,17 +80,5 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="vpn"/>
         </service>
-
-        <service
-            android:name="de.blinkt.openvpn.core.OpenVPNStatusService"
-            android:exported="false"
-            android:process=":openvpn"/>
-
-        <!-- Keeps the VPN connection alive via Android JobScheduler -->
-        <service
-            android:name="de.blinkt.openvpn.core.keepVPNAlive"
-            android:permission="android.permission.BIND_JOB_SERVICE"
-            android:exported="true"
-            android:process=":openvpn"/>
     </application>
 </manifest>
