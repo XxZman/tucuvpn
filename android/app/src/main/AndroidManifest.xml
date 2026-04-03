@@ -141,25 +141,7 @@
             android:theme="@style/Theme.AppCompat.Dialog"/>
 
         <!-- API activities -->
-        <activity-alias
-            android:name="de.blinkt.openvpn.api.ConnectVPN"
-            android:exported="true"
-            android:targetActivity="de.blinkt.openvpn.api.RemoteAction"/>
-
-        <activity-alias
-            android:name="de.blinkt.openvpn.api.DisconnectVPN"
-            android:exported="true"
-            android:targetActivity="de.blinkt.openvpn.api.RemoteAction"/>
-
-        <activity-alias
-            android:name="de.blinkt.openvpn.api.PauseVPN"
-            android:exported="true"
-            android:targetActivity="de.blinkt.openvpn.api.RemoteAction"/>
-
-        <activity-alias
-            android:name="de.blinkt.openvpn.api.ResumeVPN"
-            android:exported="true"
-            android:targetActivity="de.blinkt.openvpn.api.RemoteAction"/>
+        <!-- RemoteAction activity not available in this library version -->
 
         <!-- Boot receiver -->
         <receiver
@@ -170,15 +152,6 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
             </intent-filter>
         </receiver>
-
-        <!-- Grant permissions activity -->
-        <activity
-            android:name="de.blinkt.openvpn.api.GrantPermissionsActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-            </intent-filter>
-        </activity>
 
     </application>
 </manifest>
