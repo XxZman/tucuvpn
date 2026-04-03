@@ -17,9 +17,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- Read .ovpn config files from storage -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <!-- Permission for ics-openvpn -->
-    <permission android:name="de.blinkt.openvpn.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" android:protectionLevel="signature"/>
-    <uses-permission android:name="de.blinkt.openvpn.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"/>
 
     <!-- ── Android TV / Fire TV / BTV Box ──────────────────────────────── -->
     <uses-feature android:name="android.software.leanback" android:required="false"/>
