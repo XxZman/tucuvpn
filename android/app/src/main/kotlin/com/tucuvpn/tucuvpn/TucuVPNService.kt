@@ -97,7 +97,7 @@ class TucuVPNService : VpnService() {
             val pm = ProfileManager.getInstance(this)
             pm.addProfile(profile)
             ProfileManager.setConnectedVpnProfile(this, profile)
-            pm.saveProfile(this, profile, true, false)
+            pm.saveProfile(this, profile)
             
             VpnStatus.setConnectedVPNProfile(profile.getUUIDString())
             VpnStatus.addStateListener(stateListener)
