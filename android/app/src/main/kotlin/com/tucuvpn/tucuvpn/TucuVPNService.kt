@@ -111,15 +111,14 @@ class TucuVPNService : VpnService() {
             Log.d(TAG, "Profile UUID string: ${profile.getUUIDString()}")
             Log.d(TAG, "Profile version: ${profile.mVersion}")
             
-            // Start OpenVPNService directly with profile UUID
+            // Start OpenVPNService with profile - NO action set, just extras
             val startIntent = Intent(this, de.blinkt.openvpn.core.OpenVPNService::class.java).apply {
-                action = de.blinkt.openvpn.core.OpenVPNService.START_SERVICE
                 putExtra(de.blinkt.openvpn.VpnProfile.EXTRA_PROFILEUUID, profile.getUUIDString())
                 putExtra(de.blinkt.openvpn.VpnProfile.EXTRA_PROFILE_VERSION, profile.mVersion)
                 putExtra(de.blinkt.openvpn.core.OpenVPNService.EXTRA_DO_NOT_REPLACE_RUNNING_VPN, false)
                 putExtra(de.blinkt.openvpn.core.OpenVPNService.EXTRA_START_REASON, "TucuVPN")
             }
-            Log.d(TAG, "Starting OpenVPNService with direct intent, UUID: ${profile.getUUIDString()}")
+            Log.d(TAG, "Starting OpenVPNService with direct intent (NO ACTION), UUID: ${profile.getUUIDString()}")
             startService(startIntent)
             Log.d(TAG, "OpenVPNService start called")
 
