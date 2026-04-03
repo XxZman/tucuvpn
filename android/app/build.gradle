@@ -63,6 +63,10 @@ flutter {
     source "../.."
 }
 
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
 dependencies {
-    implementation 'com.github.nizwar:openvpn_library:b3941ef040'
+    implementation 'com.github.nizwar:openvpn_library:0.0.1'
 }

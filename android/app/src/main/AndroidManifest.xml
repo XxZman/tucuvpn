@@ -8,27 +8,26 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <!-- VPN tunnel -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
-    <!-- Foreground service (required by openvpn_flutter) -->
+    <!-- Foreground service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
-    <!-- Notifications for VPN status -->
+    <!-- Notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Boot auto-reconnect -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- Read .ovpn config files from storage -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <!-- Permission for ics-openvpn -->
+    <permission android:name="de.blinkt.openvpn.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" android:protectionLevel="signature"/>
+    <uses-permission android:name="de.blinkt.openvpn.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"/>
+
     <!-- ── Android TV / Fire TV / BTV Box ──────────────────────────────── -->
-    <!-- required="false" so the APK also installs on phones/tablets       -->
-    <uses-feature
-        android:name="android.software.leanback"
-        android:required="false"/>
-    <uses-feature
-        android:name="android.hardware.touchscreen"
-        android:required="false"/>
+    <uses-feature android:name="android.software.leanback" android:required="false"/>
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
 
     <application
         android:label="TucuVPN"
-        android:name="${applicationName}"
+        android:name="de.blinkt.openvpn.core.ICSOpenVPNApplication"
         android:icon="@mipmap/ic_launcher"
         android:banner="@mipmap/ic_launcher"
         android:appCategory="productivity"
@@ -81,10 +80,107 @@
                 android:value="vpn"/>
         </service>
 
-        <!-- ics-openvpn core service (for actual VPN connection) -->
+        <!-- ics-openvpn core service -->
         <service
             android:name="de.blinkt.openvpn.core.OpenVPNService"
             android:exported="true"
-            tools:replace="android:exported"/>
+            android:foregroundServiceType="specialUse"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:process=":openvpn"
+            tools:replace="android:exported">
+            <intent-filter>
+                <action android:name="android.net.VpnService"/>
+            </intent-filter>
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="vpn"/>
+        </service>
+
+        <!-- External API service -->
+        <service
+            android:name="de.blinkt.openvpn.api.ExternalOpenVPNService"
+            android:exported="true"
+            android:process=":openvpn">
+            <intent-filter>
+                <action android:name="de.blinkt.openvpn.api.IOpenVPNAPIService"/>
+            </intent-filter>
+        </service>
+
+        <!-- Status service -->
+        <service
+            android:name="de.blinkt.openvpn.core.OpenVPNStatusService"
+            android:exported="false"
+            android:process=":openvpn"/>
+
+        <!-- Keep VPN alive service -->
+        <service
+            android:name="de.blinkt.openvpn.core.keepVPNAlive"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:process=":openvpn"/>
+
+        <!-- Launch VPN activity -->
+        <activity
+            android:name="de.blinkt.openvpn.LaunchVPN"
+            android:exported="true"
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true"
+            android:label="Launch VPN"
+            android:taskAffinity=".LaunchVPN"
+            android:theme="@style/Theme.AppCompat.Dialog">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
+        <!-- Disconnect VPN activity -->
+        <activity
+            android:name="de.blinkt.openvpn.activities.DisconnectVPN"
+            android:exported="true"
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=".DisconnectVPN"
+            android:theme="@style/Theme.AppCompat.Dialog"/>
+
+        <!-- API activities -->
+        <activity-alias
+            android:name="de.blinkt.openvpn.api.ConnectVPN"
+            android:exported="true"
+            android:targetActivity="de.blinkt.openvpn.api.RemoteAction"/>
+
+        <activity-alias
+            android:name="de.blinkt.openvpn.api.DisconnectVPN"
+            android:exported="true"
+            android:targetActivity="de.blinkt.openvpn.api.RemoteAction"/>
+
+        <activity-alias
+            android:name="de.blinkt.openvpn.api.PauseVPN"
+            android:exported="true"
+            android:targetActivity="de.blinkt.openvpn.api.RemoteAction"/>
+
+        <activity-alias
+            android:name="de.blinkt.openvpn.api.ResumeVPN"
+            android:exported="true"
+            android:targetActivity="de.blinkt.openvpn.api.RemoteAction"/>
+
+        <!-- Boot receiver -->
+        <receiver
+            android:name="de.blinkt.openvpn.OnBootReceiver"
+            android:exported="true">
+            <intent-filter android:priority="999">
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+            </intent-filter>
+        </receiver>
+
+        <!-- Grant permissions activity -->
+        <activity
+            android:name="de.blinkt.openvpn.api.GrantPermissionsActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
+
     </application>
 </manifest>
