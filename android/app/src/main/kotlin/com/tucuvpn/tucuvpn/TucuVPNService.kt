@@ -14,7 +14,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import de.blinkt.openvpn.VpnProfile
 import de.blinkt.openvpn.core.ConfigParser
-import de.blinkt.openvpn.core.OpenVPNService
 import de.blinkt.openvpn.core.ProfileManager
 import de.blinkt.openvpn.core.VPNLaunchHelper
 import de.blinkt.openvpn.core.VpnStatus
@@ -130,13 +129,17 @@ class TucuVPNService : VpnService() {
         ) {
             Log.d(TAG, "State: $state, Level: $level, Message: $logmessage")
             
-            val statusText = when {
-                level == de.blinkt.openvpn.core.ConnectionStatus.LEVEL_CONNECTED -> "Conectado"
-                level == de.blinkt.openvpn.core.ConnectionStatus.LEVEL_NOTCONNECTED -> "Desconectado"
-                level == de.blinkt.openvpn.core.ConnectionStatus.LEVEL_AUTH_FAILED -> "Auth fallida"
-                level == de.blinkt.openvpn.core.ConnectionStatus.LEVEL_CONNECTING_SERVERREPLIED -> "Conectando..."
-                level == de.blinkt.openvpn.core.ConnectionStatus.LEVEL_WAITING_FOR_USER_INPUT -> "Esperando..."
-                level == de.blinkt.openvpn.core.ConnectionStatus.LEVEL_VPNPAUSED -> "Pausado"
+            val statusText = when (state) {
+                "CONNECTED" -> "Conectado"
+                "DISCONNECTED", "EXITING" -> "Desconectado"
+                "NEGOTIATING" -> "Negociando..."
+                "AUTH" -> "Autenticando..."
+                "WAIT" -> "Esperando servidor..."
+                "RECONNECTING" -> "Reconectando..."
+                "GET_CONFIG" -> "Obteniendo config..."
+                "ASSIGN_IP" -> "Asignando IP..."
+                "ADD_ROUTES" -> "Configurando rutas..."
+                "CONNECTING" -> "Conectando..."
                 else -> state ?: "Desconocido"
             }
             
