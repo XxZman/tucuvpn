@@ -11,6 +11,7 @@
     <!-- Foreground service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED"/>
     <!-- Notifications -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Boot auto-reconnect -->
@@ -24,7 +25,7 @@
 
     <application
         android:label="TucuVPN"
-        android:name="de.blinkt.openvpn.core.ICSOpenVPNApplication"
+        android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:banner="@mipmap/ic_launcher"
         android:appCategory="productivity"
@@ -62,22 +63,17 @@
             android:name="flutterEmbedding"
             android:value="2"/>
 
-        <!-- Replace library's OpenVPNService with our own -->
+        <!-- Our VPN service (no intent-filter, only used by Flutter via MethodChannel) -->
         <service
             android:name="com.tucuvpn.tucuvpn.TucuVPNService"
-            android:permission="android.permission.BIND_VPN_SERVICE"
             android:foregroundServiceType="specialUse"
-            android:exported="true"
-            tools:node="replace">
-            <intent-filter>
-                <action android:name="android.net.VpnService"/>
-            </intent-filter>
+            android:exported="false">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="vpn"/>
         </service>
 
-        <!-- ics-openvpn core service -->
+        <!-- ics-openvpn core service - the real VPN service -->
         <service
             android:name="de.blinkt.openvpn.core.OpenVPNService"
             android:exported="true"
