@@ -7,27 +7,10 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.net.VpnService
 import android.os.IBinder
-import de.blinkt.openvpn.VpnProfile
-import de.blinkt.openvpn.core.ConfigParser
-import de.blinkt.openvpn.core.ProfileManager
-import de.blinkt.openvpn.core.VPNLaunchHelper
 import de.blinkt.openvpn.core.ConnectionStatus
 import de.blinkt.openvpn.core.VpnStatus
 import io.flutter.plugin.common.EventChannel
-import java.io.StringReader
 
-/**
- * VPN helper that uses TucuVPNService (our own VPN service in com.tucuvpn.tucuvpn).
- *
- * Lifecycle:
- *   1. [connect] requests VPN permission if needed, then starts TucuVPNService.
- *   2. If the system shows the permission dialog, [onPermissionResult] resumes
- *      the connect flow once the user responds.
- *   3. Stage events from [VpnStatus.StateListener] are forwarded to Flutter via
- *      [eventSink] as lowercase strings ("connected", "connecting", etc.).
- *   4. [disconnect] stops TucuVPNService and emits "disconnected".
- *   5. Call [cleanup] from onDestroy to remove the state listener.
- */
 class VpnHelper(private val activity: Activity) {
 
     companion object {
@@ -49,9 +32,9 @@ class VpnHelper(private val activity: Activity) {
             android.util.Log.d("VpnHelper", "TucuVPNService bound")
             
             val cfg = pendingConfig
-            val name = pendingName
-            if (cfg != null && name != null) {
-                vpnService?.connect(cfg, name)
+            val n = pendingName
+            if (cfg != null && n != null) {
+                vpnService?.connect(cfg, n)
             }
             pendingConfig = null
             pendingName = null
@@ -76,16 +59,10 @@ class VpnHelper(private val activity: Activity) {
                 level == ConnectionStatus.LEVEL_NOTCONNECTED -> "disconnected"
                 level == ConnectionStatus.LEVEL_AUTH_FAILED  -> "auth_failed"
                 level == ConnectionStatus.LEVEL_NONETWORK    -> "nonetwork"
-                state == "RECONNECTING"                      -> "connecting"
-                state == "CONNECTING"                        -> "connecting"
-                state == "WAIT"                              -> "connecting"
-                state == "AUTH"                              -> "connecting"
-                state == "GET_CONFIG"                        -> "connecting"
-                state == "ASSIGN_IP"                         -> "connecting"
-                state == "ADD_ROUTES"                        -> "connecting"
                 state == "CONNECTED"                         -> "connected"
                 state == "DISCONNECTED"                      -> "disconnected"
                 state == "EXITING"                           -> "disconnected"
+                state == "NOPROCESS"                         -> "disconnected"
                 else                                         -> state?.lowercase() ?: "connecting"
             }
             activity.runOnUiThread { eventSink?.success(mapped) }
@@ -116,8 +93,8 @@ class VpnHelper(private val activity: Activity) {
     fun onPermissionResult(granted: Boolean) {
         if (granted) {
             val cfg = pendingConfig
-            val name = pendingName
-            if (cfg != null && name != null) startVpn(cfg, name)
+            val n = pendingName
+            if (cfg != null && n != null) startVpn(cfg, n)
             else activity.runOnUiThread { eventSink?.success("error:lost pending config") }
         } else {
             activity.runOnUiThread { eventSink?.success("denied") }
@@ -127,10 +104,6 @@ class VpnHelper(private val activity: Activity) {
     }
 
     fun disconnect() {
-        try {
-            ProfileManager.setConntectedVpnProfileDisconnected(activity)
-        } catch (_: Exception) {}
-        
         try {
             if (serviceBound) {
                 vpnService?.disconnect()
@@ -157,43 +130,22 @@ class VpnHelper(private val activity: Activity) {
     }
 
     private fun startVpn(config: String, name: String) {
-        val clean = config.lines()
-            .filter { line -> val t = line.trim(); t.isNotEmpty() && !t.startsWith("#") && !t.startsWith(";") }
-            .joinToString("\n")
+        android.util.Log.d("VpnHelper", "startVpn name=$name")
+        activity.runOnUiThread { eventSink?.success("log:connecting ($name)") }
 
-        android.util.Log.d("VpnHelper", "startVpn name=$name lines=${clean.lines().size}")
-        activity.runOnUiThread { eventSink?.success("log:parsing config ($name)") }
+        pendingConfig = config
+        pendingName = name
 
-        try {
-            val cp = ConfigParser()
-            cp.parseConfig(StringReader(clean))
-
-            val profile: VpnProfile = cp.convertProfile()
-            profile.mName = name
-
-            val pm = ProfileManager.getInstance(activity)
-            pm.addProfile(profile)
-            ProfileManager.setConnectedVpnProfile(activity, profile)
-
-            pendingConfig = clean
-            pendingName = name
-
-            val intent = Intent(activity, TucuVPNService::class.java).apply {
-                action = TucuVPNService.ACTION_CONNECT
-                putExtra("config", clean)
-                putExtra("name", name)
-            }
-            activity.startService(intent)
-            
-            if (!serviceBound) {
-                val bindIntent = Intent(activity, TucuVPNService::class.java)
-                activity.bindService(bindIntent, serviceConnection, Context.BIND_AUTO_CREATE)
-            }
-
-        } catch (e: ConfigParser.ConfigParseError) {
-            emitError("startVpn/parse", e)
-        } catch (e: Exception) {
-            emitError("startVpn", e)
+        val intent = Intent(activity, TucuVPNService::class.java).apply {
+            action = TucuVPNService.ACTION_CONNECT
+            putExtra("config", config)
+            putExtra("name", name)
+        }
+        activity.startService(intent)
+        
+        if (!serviceBound) {
+            val bindIntent = Intent(activity, TucuVPNService::class.java)
+            activity.bindService(bindIntent, serviceConnection, Context.BIND_AUTO_CREATE)
         }
     }
 
