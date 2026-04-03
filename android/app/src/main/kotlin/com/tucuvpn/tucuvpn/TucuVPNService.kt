@@ -10,8 +10,6 @@ import android.net.VpnService
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import android.content.ComponentName
-import android.content.ServiceConnection
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import de.blinkt.openvpn.VpnProfile
@@ -113,21 +111,17 @@ class TucuVPNService : VpnService() {
             Log.d(TAG, "Profile UUID string: ${profile.getUUIDString()}")
             Log.d(TAG, "Profile version: ${profile.mVersion}")
             
-            // Bind to OpenVPNService to receive state updates
-            val vpnIntent = Intent(this, de.blinkt.openvpn.core.OpenVPNService::class.java)
-            bindService(vpnIntent, object : ServiceConnection {
-                override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                    Log.d(TAG, "OpenVPNService connected")
-                }
-                override fun onServiceDisconnected(name: ComponentName?) {
-                    Log.d(TAG, "OpenVPNService disconnected")
-                }
-            }, Context.BIND_AUTO_CREATE)
-            
-            val startIntent = profile.getStartServiceIntent(this)
-            Log.d(TAG, "Starting OpenVPNService with profile intent...")
+            // Start OpenVPNService directly with profile UUID
+            val startIntent = Intent(this, de.blinkt.openvpn.core.OpenVPNService::class.java).apply {
+                action = de.blinkt.openvpn.core.OpenVPNService.START_SERVICE
+                putExtra(de.blinkt.openvpn.VpnProfile.EXTRA_PROFILEUUID, profile.getUUIDString())
+                putExtra(de.blinkt.openvpn.VpnProfile.EXTRA_PROFILE_VERSION, profile.mVersion)
+                putExtra(de.blinkt.openvpn.core.OpenVPNService.EXTRA_DO_NOT_REPLACE_RUNNING_VPN, false)
+                putExtra(de.blinkt.openvpn.core.OpenVPNService.EXTRA_START_REASON, "TucuVPN")
+            }
+            Log.d(TAG, "Starting OpenVPNService with direct intent, UUID: ${profile.getUUIDString()}")
             startService(startIntent)
-            Log.d(TAG, "OpenVPNService started successfully")
+            Log.d(TAG, "OpenVPNService start called")
 
         } catch (e: Exception) {
             Log.e(TAG, "Error connecting: ${e.message}", e)
