@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.net.VpnService
 import android.os.Binder
@@ -14,10 +13,13 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import de.blinkt.openvpn.VpnProfile
 import de.blinkt.openvpn.core.ConfigParser
+import de.blinkt.openvpn.core.NativeUtils
 import de.blinkt.openvpn.core.ProfileManager
 import de.blinkt.openvpn.core.VPNLaunchHelper
 import de.blinkt.openvpn.core.VpnStatus
 import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.io.StringReader
 
 class TucuVPNService : VpnService() {
@@ -44,7 +46,28 @@ class TucuVPNService : VpnService() {
         super.onCreate()
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         createNotificationChannel()
+        
+        logNativeDebug()
+        
         Log.d(TAG, "TucuVPNService created")
+    }
+
+    private fun logNativeDebug() {
+        Log.d(TAG, "=== NATIVE DEBUG ===")
+        Log.d(TAG, "nativeLibraryDir: ${applicationInfo.nativeLibraryDir}")
+        Log.d(TAG, "nativeLibraryRootDir: ${applicationInfo.nativeLibraryRootDir}")
+        Log.d(TAG, "SUPPORTED_ABIS: ${Build.SUPPORTED_ABIS.joinToString()}")
+        Log.d(TAG, "CPU_ABI: ${Build.CPU_ABI}")
+        Log.d(TAG, "SDK_INT: ${Build.VERSION.SDK_INT}")
+        
+        val nativeDir = File(applicationInfo.nativeLibraryDir ?: "")
+        if (nativeDir.exists() && nativeDir.isDirectory) {
+            nativeDir.listFiles()?.forEach { file ->
+                Log.d(TAG, "Found in nativeLibraryDir: ${file.name} (${file.length()} bytes)")
+            }
+        } else {
+            Log.w(TAG, "nativeLibraryDir does not exist or is not a directory")
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -76,8 +99,6 @@ class TucuVPNService : VpnService() {
 
     fun connect(config: String, name: String) {
         Log.d(TAG, "connect called with name=$name")
-        Log.d(TAG, "Native library dir: ${applicationInfo.nativeLibraryDir}")
-        Log.d(TAG, "Supported ABIs: ${Build.SUPPORTED_ABIS.joinToString()}")
         
         startForeground(NOTIFICATION_ID, createNotification("Conectando..."))
         
@@ -103,6 +124,8 @@ class TucuVPNService : VpnService() {
 
             writeOpenVPNConfig(cleanConfig)
             
+            Log.d(TAG, "Starting OpenVPN via VPNLaunchHelper")
+            
             VPNLaunchHelper.startOpenVpn(profile, this)
 
             VpnStatus.addStateListener(stateListener)
@@ -115,7 +138,7 @@ class TucuVPNService : VpnService() {
     }
 
     private fun writeOpenVPNConfig(config: String) {
-        val configFile = File(cacheDir, "android.conf")
+        val configFile = File(filesDir, "android.conf")
         val builder = StringBuilder(config)
         
         if (!config.contains("dev tun")) {
@@ -165,6 +188,7 @@ class TucuVPNService : VpnService() {
                 "CONNECTING" -> "Conectando..."
                 "NOPROCESS" -> "Sin proceso"
                 "VPN_GENERATE_CONFIG" -> "Generando config..."
+                "VPN_START" -> "Iniciando VPN..."
                 else -> state ?: "Desconocido"
             }
             

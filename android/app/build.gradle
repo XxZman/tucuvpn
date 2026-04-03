@@ -29,9 +29,13 @@ android {
     defaultConfig {
         applicationId "com.tucuvpn.tucuvpn"
         minSdk 21
-        targetSdk 33
+        targetSdk 34
         versionCode flutter.versionCode
         versionName flutter.versionName
+        
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
     }
 
     buildTypes {
@@ -50,6 +54,8 @@ android {
         pickFirst '**/libovpnutil.so'
         pickFirst '**/libosslutil.so'
         pickFirst '**/libosslspeedtest.so'
+        pickFirst '**/libssl.so'
+        pickFirst '**/libcrypto.so'
     }
 }
 

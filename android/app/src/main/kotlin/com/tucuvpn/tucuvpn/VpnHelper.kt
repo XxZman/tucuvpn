@@ -130,12 +130,18 @@ class VpnHelper(private val activity: Activity) {
     }
 
     private fun startVpn(config: String, name: String) {
-        android.util.Log.d("VpnHelper", "startVpn name=$name")
+        android.util.Log.d("VpnHelper", "=== startVpn called ===")
+        android.util.Log.d("VpnHelper", "name=$name")
+        android.util.Log.d("VpnHelper", "config length=${config.length}")
+        android.util.Log.d("VpnHelper", NativeLibHelper.getLibsInfo(activity))
+        
         activity.runOnUiThread { eventSink?.success("log:connecting ($name)") }
 
         pendingConfig = config
         pendingName = name
 
+        android.util.Log.d("VpnHelper", "Starting TucuVPNService...")
+        
         val intent = Intent(activity, TucuVPNService::class.java).apply {
             action = TucuVPNService.ACTION_CONNECT
             putExtra("config", config)
@@ -144,6 +150,7 @@ class VpnHelper(private val activity: Activity) {
         activity.startService(intent)
         
         if (!serviceBound) {
+            android.util.Log.d("VpnHelper", "Binding to TucuVPNService...")
             val bindIntent = Intent(activity, TucuVPNService::class.java)
             activity.bindService(bindIntent, serviceConnection, Context.BIND_AUTO_CREATE)
         }

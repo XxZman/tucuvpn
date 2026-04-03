@@ -35,6 +35,9 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
+        NativeLibHelper.ensureLibsLoaded(applicationContext)
+        android.util.Log.d("MainActivity", NativeLibHelper.getLibsInfo(applicationContext))
+
         vpnHelper = VpnHelper(this)
 
         // ── VPN stage event stream (ics-openvpn → Flutter) ─────────────────────
