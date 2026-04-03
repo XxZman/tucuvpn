@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import de.blinkt.openvpn.VpnProfile
 import de.blinkt.openvpn.core.ConfigParser
+import de.blinkt.openvpn.core.OpenVPNService
 import de.blinkt.openvpn.core.ProfileManager
 import de.blinkt.openvpn.core.VpnStatus
 import java.io.File
@@ -108,23 +109,44 @@ class TucuVPNService : VpnService() {
 
             val profile: VpnProfile = cp.convertProfile()
             profile.mName = name
-
+            
+            currentProfile = profile
+            
             val pm = ProfileManager.getInstance(this)
             pm.addProfile(profile)
             ProfileManager.setConnectedVpnProfile(this, profile)
+            ProfileManager.saveProfile(this, profile)
             
-            currentProfile = profile
-
-            writeOpenVPNConfig(cleanConfig)
-            
+            VpnStatus.setConnectedVPNProfile(profile.getUUIDString())
             VpnStatus.addStateListener(stateListener)
 
-            startOpenVPNProcess()
+            Log.d(TAG, "Profile saved with UUID: ${profile.getUUIDString()}, starting OpenVPN...")
+            
+            startOpenVpnService(profile.getUUIDString(), profile.mVersion)
 
         } catch (e: Exception) {
             Log.e(TAG, "Error connecting: ${e.message}", e)
             VpnStatus.logError("Error: ${e.message}")
             stopSelf()
+        }
+    }
+    
+    private fun startOpenVpnService(profileUuid: String, profileVersion: Int) {
+        Log.d(TAG, "Starting OpenVPN service with profile: $profileUuid v$profileVersion")
+        
+        val intent = Intent(this, de.blinkt.openvpn.core.OpenVPNService::class.java).apply {
+            action = de.blinkt.openvpn.core.OpenVPNService.START_SERVICE
+            putExtra(de.blinkt.openvpn.VpnProfile.EXTRA_PROFILEUUID, profileUuid)
+            putExtra(de.blinkt.openvpn.VpnProfile.EXTRA_PROFILE_VERSION, profileVersion)
+            putExtra(de.blinkt.openvpn.core.OpenVPNService.EXTRA_DO_NOT_REPLACE_RUNNING_VPN, false)
+        }
+        
+        try {
+            startService(intent)
+            Log.d(TAG, "OpenVPN service started successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start OpenVPN service: ${e.message}", e)
+            VpnStatus.logError("Failed to start VPN: ${e.message}")
         }
     }
 
@@ -286,6 +308,13 @@ class TucuVPNService : VpnService() {
 
     fun disconnect() {
         Log.d(TAG, "Disconnect called")
+        
+        try {
+            val intent = Intent(this, de.blinkt.openvpn.core.OpenVPNService::class.java).apply {
+                action = de.blinkt.openvpn.core.OpenVPNService.DISCONNECT_VPN
+            }
+            startService(intent)
+        } catch (_: Exception) {}
         
         try {
             ProfileManager.setConntectedVpnProfileDisconnected(this)

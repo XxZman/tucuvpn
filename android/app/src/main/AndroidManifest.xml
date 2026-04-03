@@ -80,5 +80,10 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="vpn"/>
         </service>
+
+        <!-- ics-openvpn core service (for actual VPN connection) -->
+        <service
+            android:name="de.blinkt.openvpn.core.OpenVPNService"
+            android:exported="false"/>
     </application>
 </manifest>
