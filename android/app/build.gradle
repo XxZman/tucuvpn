@@ -58,11 +58,5 @@ flutter {
 }
 
 dependencies {
-    // ics-openvpn via JitPack. schwabe/ics-openvpn is an app project with NDK
-    // dependencies that JitPack cannot build. This nizwar fork is the only
-    // published AAR on JitPack that provides de.blinkt.openvpn.core.* classes.
-    // Our VpnHelper.kt bypasses nizwar's VPNHelper wrapper and uses the core
-    // ics-openvpn API (ConfigParser, VpnProfile, VPNLaunchHelper, VpnStatus)
-    // directly, so we get reliable OpenVPN behaviour without the nizwar glue.
     implementation 'com.github.nizwar:openvpn_library:b3941ef040'
 }
