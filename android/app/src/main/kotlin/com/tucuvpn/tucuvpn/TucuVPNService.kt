@@ -97,14 +97,14 @@ class TucuVPNService : VpnService() {
             val pm = ProfileManager.getInstance(this)
             pm.addProfile(profile)
             ProfileManager.setConnectedVpnProfile(this, profile)
-            ProfileManager.saveProfile(this, profile)
+            pm.saveProfile(this, profile, true, false)
             
             VpnStatus.setConnectedVPNProfile(profile.getUUIDString())
             VpnStatus.addStateListener(stateListener)
 
             Log.d(TAG, "Profile saved with UUID: ${profile.getUUIDString()}")
             
-            val startIntent = profile.getStartServiceIntent(this, "TucuVPN", true)
+            val startIntent = profile.getStartServiceIntent(this)
             Log.d(TAG, "Starting OpenVPNService with profile intent...")
             startService(startIntent)
             Log.d(TAG, "OpenVPNService started successfully")
