@@ -1,12 +1,8 @@
 package com.tucuvpn.tucuvpn
 
 import android.app.Activity
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.net.VpnService
-import android.os.IBinder
 import de.blinkt.openvpn.core.ConnectionStatus
 import de.blinkt.openvpn.core.VpnStatus
 import io.flutter.plugin.common.EventChannel
@@ -21,30 +17,6 @@ class VpnHelper(private val activity: Activity) {
 
     private var pendingConfig: String? = null
     private var pendingName: String? = null
-    private var vpnService: TucuVPNService? = null
-    private var serviceBound = false
-
-    private val serviceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            val binder = service as TucuVPNService.LocalBinder
-            vpnService = binder.getService()
-            serviceBound = true
-            android.util.Log.d("VpnHelper", "TucuVPNService bound")
-            
-            val cfg = pendingConfig
-            val n = pendingName
-            if (cfg != null && n != null) {
-                vpnService?.connect(cfg, n)
-            }
-            pendingConfig = null
-            pendingName = null
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            vpnService = null
-            serviceBound = false
-        }
-    }
 
     private val stateListener = object : VpnStatus.StateListener {
         override fun updateState(
@@ -104,14 +76,6 @@ class VpnHelper(private val activity: Activity) {
     }
 
     fun disconnect() {
-        try {
-            if (serviceBound) {
-                vpnService?.disconnect()
-                activity.unbindService(serviceConnection)
-                serviceBound = false
-            }
-        } catch (_: Exception) {}
-        
         val intent = Intent(activity, TucuVPNService::class.java)
         intent.action = TucuVPNService.ACTION_DISCONNECT
         activity.startService(intent)
@@ -121,12 +85,6 @@ class VpnHelper(private val activity: Activity) {
 
     fun cleanup() {
         VpnStatus.removeStateListener(stateListener)
-        if (serviceBound) {
-            try {
-                activity.unbindService(serviceConnection)
-            } catch (_: Exception) {}
-            serviceBound = false
-        }
     }
 
     private fun startVpn(config: String, name: String) {
@@ -137,10 +95,7 @@ class VpnHelper(private val activity: Activity) {
         
         activity.runOnUiThread { eventSink?.success("log:connecting ($name)") }
 
-        pendingConfig = config
-        pendingName = name
-
-        android.util.Log.d("VpnHelper", "Starting TucuVPNService...")
+        android.util.Log.d("VpnHelper", "Starting TucuVPNService directly (NO BIND)...")
         
         val intent = Intent(activity, TucuVPNService::class.java).apply {
             action = TucuVPNService.ACTION_CONNECT
@@ -148,12 +103,6 @@ class VpnHelper(private val activity: Activity) {
             putExtra("name", name)
         }
         activity.startService(intent)
-        
-        if (!serviceBound) {
-            android.util.Log.d("VpnHelper", "Binding to TucuVPNService...")
-            val bindIntent = Intent(activity, TucuVPNService::class.java)
-            activity.bindService(bindIntent, serviceConnection, Context.BIND_AUTO_CREATE)
-        }
     }
 
     private fun emitError(method: String, e: Exception) {
