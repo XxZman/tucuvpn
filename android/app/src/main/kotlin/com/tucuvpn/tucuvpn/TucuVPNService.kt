@@ -99,7 +99,7 @@ class TucuVPNService : VpnService() {
             Log.d(TAG, "Profile connections count: ${profile.mConnections.size}")
             if (profile.mConnections.isNotEmpty()) {
                 val conn = profile.mConnections[0]
-                Log.d(TAG, "First connection: ${conn.mServerName}:${conn.mServerPort} proto=${conn.mProto}")
+                Log.d(TAG, "First connection: ${conn.mServerName}:${conn.mServerPort}")
             }
             
             currentProfile = profile
@@ -117,8 +117,8 @@ class TucuVPNService : VpnService() {
             // Start the VPN properly like AutoVpn does
             val startIntent = Intent(this, de.blinkt.openvpn.core.OpenVPNService::class.java)
             startIntent.putExtra(de.blinkt.openvpn.VpnProfile.EXTRA_PROFILEUUID, profile.getUUIDString())
-            startIntent.putExtra(de.blinkt.openvpn.VpnProfile.EXTRA_PROFILE_VERSION, profile.mVersion)
-            startIntent.putExtra(de.blinkt.openvpn.core.OpenVPNService.EXTRA_DO_NOT_REPLACE_RUNNING_VPN, false)
+            startIntent.putExtra("de.blinkt.openvpn.VpnProfile.EXTRA_PROFILE_VERSION", profile.mVersion)
+            startIntent.putExtra("de.blinkt.openvpn.DO_NOT_REPLACE_RUNNING_VPN", false)
             Log.d(TAG, "Starting OpenVPNService properly...")
             startService(startIntent)
             Log.d(TAG, "OpenVPNService started, waiting for connection...")
