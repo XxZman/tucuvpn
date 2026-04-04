@@ -82,6 +82,7 @@
             tools:replace="android:exported">
             <intent-filter>
                 <action android:name="android.net.VpnService"/>
+                <action android:name="de.blinkt.openvpn.START_SERVICE"/>
             </intent-filter>
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="vpn"/>
         </service>
